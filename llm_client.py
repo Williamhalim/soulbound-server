@@ -1,5 +1,7 @@
 import os
 import requests
+import json
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,9 +25,9 @@ def generate_questions():
 
     Example format:
     [
-      "What would you do if you saw someone in danger?",
-      "How do you handle conflicting loyalties in a group?",
-      "When faced with an ancient riddle, do you rush or reflect?"
+      "Question 1",
+      "Question 2",
+      "Question 3"
     ]
 
     Important rules:
@@ -58,7 +60,9 @@ def generate_questions():
 def get_personality_traits(answers):
     prompt = f"""
 Analyze this player's personality based on the answers below.
-Return JSON with: bravery (1-10), empathy (1-10), curiosity (1-10), logic (1-10), alignment (string).
+Return ONLY valid JSON with: bravery (1-10), empathy (1-10), curiosity (1-10), logic (1-10), alignment (string).
+
+Do NOT explain anything. No extra text.
 
 Answers:
 {answers}
@@ -80,9 +84,21 @@ Answers:
 
     if response.status_code == 200:
         result = response.json()
-        return result["choices"][0]["message"]["content"]
+        content = result["choices"][0]["message"]["content"]
+        print("🧠 Raw LLM Content:", content)
+
+        try:
+            # Extract JSON block with regex
+            match = re.search(r"\{[\s\S]*?\}", content)
+            if match:
+                return json.loads(match.group(0))
+            else:
+                raise ValueError("No valid JSON block found.")
+        except Exception as e:
+            print("❌ JSON decode error:", e)
+            return {"archetype": "Unknown", "error": "Failed to parse JSON", "raw": content}
     else:
         print("\n❌ LLM Error:")
         print("Status Code:", response.status_code)
         print("Response Text:", response.text)
-        return {"error": "LLM call failed"}
+        return {"archetype": "Unknown", "error": "LLM call failed"}
