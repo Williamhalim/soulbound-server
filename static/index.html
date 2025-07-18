@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>LLM Prompt Tester</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    textarea { width: 100%; height: 150px; font-size: 1rem; }
+    pre { background: #f4f4f4; padding: 1rem; white-space: pre-wrap; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>🧠 Personality Prompt Tester</h1>
+  
+  <button onclick="loadQuestions()">Start Quiz</button>
+  <ul id="questionList"></ul>
+
+  <button id ="send" onclick="send()" style="display: none;">Submit Answers</button>
+
+  <h2>Response:</h2>
+  <pre id="output">{ waiting for response... }</pre>
+
+  <script>
+    async function loadQuestions() {
+      const res = await fetch("/questions");
+      let raw = await res.text();
+
+      console.log("📦 Raw response from server:", raw);
+
+      try {
+        raw = raw.replace(/```json|```/g, "").trim();
+
+        if (raw.startsWith('"') && raw.endsWith('"')) {
+          raw = raw.slice(1, -1);
+        }
+
+        raw = raw.replace(/\\"/g, '"');
+
+        let parsed = JSON.parse(raw);
+
+        if (typeof parsed === "string" && parsed.trim().startsWith("[")) {
+          parsed = JSON.parse(parsed);
+        }
+
+        if (!Array.isArray(parsed)) throw new Error("Parsed result is not an array");
+
+        // 🎯 Render questions and answer inputs
+        const qList = document.getElementById("questionList");
+        qList.innerHTML = "";
+
+        parsed.forEach((q, i) => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <p><strong>Q${i + 1}:</strong> ${q}</p>
+            <textarea id="answer${i}" rows="2" style="width: 100%;" placeholder="Your answer..."></textarea>
+          `;
+          qList.appendChild(li);
+        });
+
+        // Show submit button
+        document.getElementById("send").style.display = "block";
+
+        console.log("✅ Final parsed questions:", parsed);
+
+      } catch (e) {
+        console.error("❌ Failed to parse LLM response:", e);
+        document.getElementById("questionList").innerHTML = "<li>⚠️ Could not understand LLM response</li>";
+        document.getElementById("send").style.display = "none";
+      }
+    }
+
+    // send answers
+    async function send() {
+      const answers = [
+        document.getElementById("answer0").value,
+        document.getElementById("answer1").value,
+        document.getElementById("answer2").value
+      ];
+
+      console.log("📝 Answers:", answers);
+
+      
+      output.textContent = "⏳ Sending...";
+      // POST method to send the answers to the LLM
+      try {
+        const res = await fetch("/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        });
+
+        const data = await res.json();
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        output.textContent = "❌ Error: " + err;
+      }
+      // POST end
+    }
+
+  </script>
+</body>
+</html>
