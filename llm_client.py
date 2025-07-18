@@ -63,6 +63,7 @@ def generate_questions():
     if response.status_code == 200:
         # Get LLM response text
         result = response.json()
+        print("RAW:", result["choices"][0]["message"]["content"])
         return result["choices"][0]["message"]["content"]
     else:
         # Log error and return fallback

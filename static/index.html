@@ -29,59 +29,30 @@
   <script>
     // 🔄 STEP 1: Load Questions
     async function loadQuestions() {
-      const res = await fetch("/questions");
-      let raw = await res.text();
-      console.log("📦 Raw response from server:", raw);
+    const res = await fetch("/questions");
+    const questions = await res.json();
 
-      let questions = [];
+    const qList = document.getElementById("questionList");
+    qList.innerHTML = "";
 
-      try {
-        // 🧹 Clean up common LLM output issues
-        raw = raw.replace(/```json|```/g, "").trim();    // Remove code block markers
-        raw = raw.replace(/\\n/g, "");                   // Remove escaped newlines
-        raw = raw.replace(/\\"/g, '"');                  // Unescape quotes
-        raw = raw.replace(/^"+|"+$/g, "");               // Trim outer quotes
-
-        // 🧪 Try parsing JSON
-        let parsed = JSON.parse(raw);
-
-        // 🔁 If it's a stringified array, parse again
-        if (typeof parsed === "string" && parsed.trim().startsWith("[")) {
-          parsed = JSON.parse(parsed);
-        }
-
-        // ✅ Extract the question array
-        if (parsed.questions && Array.isArray(parsed.questions)) {
-          questions = parsed.questions;
-        } else if (Array.isArray(parsed)) {
-          questions = parsed;
-        } else {
-          throw new Error("Unrecognized format");
-        }
-
-        // 🎨 Render the questions as inputs
-        const qList = document.getElementById("questionList");
-        qList.innerHTML = "";
-
-        questions.forEach((q, i) => {
-          const li = document.createElement("li");
-          li.innerHTML = `
-            <p><strong>Q${i + 1}:</strong> ${q}</p>
-            <textarea id="answer${i}" rows="2" style="width: 100%;" placeholder="Your answer..."></textarea>
-          `;
-          qList.appendChild(li);
-        });
-
-        document.getElementById("send").style.display = "block";
-        console.log("✅ Final parsed questions:", questions);
-
-      } catch (e) {
-        // ❌ Error handling if LLM response can't be parsed
-        console.error("❌ Failed to parse LLM response:", e, raw);
-        document.getElementById("questionList").innerHTML = "<li>⚠️ Could not understand LLM response</li>";
-        document.getElementById("send").style.display = "none";
-      }
+    if (!Array.isArray(questions) || questions.length !== 3) {
+      qList.innerHTML = "<li>⚠️ Failed to load questions.</li>";
+      document.getElementById("send").style.display = "none";
+      return;
     }
+
+    questions.forEach((q, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <p><strong>Q${i + 1}:</strong> ${q}</p>
+        <textarea id="answer${i}" rows="2" style="width: 100%;" placeholder="Your answer..."></textarea>
+      `;
+      qList.appendChild(li);
+    });
+
+    document.getElementById("send").style.display = "block";
+    console.log("✅ Final parsed questions:", questions);
+  }
 
     // 🔄 STEP 2: Send answers → get personality → get alternate start
     async function send() {
