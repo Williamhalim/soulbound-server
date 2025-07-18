@@ -11,41 +11,46 @@
   </style>
 </head>
 <body>
+
+  <!-- 💡 Main header -->
   <h1>🧠 Personality Prompt Tester</h1>
-  
+
+  <!-- 🚀 Button to load 3 questions from backend -->
   <button onclick="loadQuestions()">Start Quiz</button>
-  <ul id="questionList"></ul>
+  <ul id="questionList"></ul> <!-- 🧾 Questions get rendered here -->
 
-  <button id ="send" onclick="send()" style="display: none;">Submit Answers</button>
+  <!-- 📤 Submit button to send answers (hidden until questions loaded) -->
+  <button id="send" onclick="send()" style="display: none;">Submit Answers</button>
 
+  <!-- 🔍 Output area for personality result and alternate start -->
   <h2>Response:</h2>
   <pre id="output">{ waiting for response... }</pre>
 
   <script>
+    // 🔄 STEP 1: Load Questions
     async function loadQuestions() {
       const res = await fetch("/questions");
       let raw = await res.text();
-
       console.log("📦 Raw response from server:", raw);
 
       let questions = [];
 
       try {
-        // 🧹 Step 1: Strip common LLM junk
-        raw = raw.replace(/```json|```/g, "").trim(); // code fencing
-        raw = raw.replace(/\\n/g, "");                // newline escapes
-        raw = raw.replace(/\\"/g, '"');               // unescape inner quotes
-        raw = raw.replace(/^"+|"+$/g, "");            // trim outer quotes
+        // 🧹 Clean up common LLM output issues
+        raw = raw.replace(/```json|```/g, "").trim();    // Remove code block markers
+        raw = raw.replace(/\\n/g, "");                   // Remove escaped newlines
+        raw = raw.replace(/\\"/g, '"');                  // Unescape quotes
+        raw = raw.replace(/^"+|"+$/g, "");               // Trim outer quotes
 
-        // 🧪 Step 2: Try parse directly
+        // 🧪 Try parsing JSON
         let parsed = JSON.parse(raw);
 
-        // 🧪 Step 3: If stringified array, parse again
+        // 🔁 If it's a stringified array, parse again
         if (typeof parsed === "string" && parsed.trim().startsWith("[")) {
           parsed = JSON.parse(parsed);
         }
 
-        // 🛠 Step 4: Handle if LLM gave { questions: [...] }
+        // ✅ Extract the question array
         if (parsed.questions && Array.isArray(parsed.questions)) {
           questions = parsed.questions;
         } else if (Array.isArray(parsed)) {
@@ -54,7 +59,7 @@
           throw new Error("Unrecognized format");
         }
 
-        // ✅ Now render it safely
+        // 🎨 Render the questions as inputs
         const qList = document.getElementById("questionList");
         qList.innerHTML = "";
 
@@ -71,14 +76,16 @@
         console.log("✅ Final parsed questions:", questions);
 
       } catch (e) {
+        // ❌ Error handling if LLM response can't be parsed
         console.error("❌ Failed to parse LLM response:", e, raw);
         document.getElementById("questionList").innerHTML = "<li>⚠️ Could not understand LLM response</li>";
         document.getElementById("send").style.display = "none";
       }
     }
 
-    // send answers
+    // 🔄 STEP 2: Send answers → get personality → get alternate start
     async function send() {
+      // 📝 Gather answers from textareas
       const answers = [
         document.getElementById("answer0").value,
         document.getElementById("answer1").value,
@@ -86,10 +93,10 @@
       ];
 
       console.log("📝 Answers:", answers);
-
       output.textContent = "⏳ Sending answers for analysis...";
 
       try {
+        // 📤 POST to /analyze
         const res = await fetch("/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -104,10 +111,10 @@
           return;
         }
 
-        // Show personality analysis
+        // 🎯 Show personality traits and move on to alternate start generation
         output.textContent = `🧠 Personality:\n${JSON.stringify(personality, null, 2)}\n\n⏳ Generating Alternate Start...`;
 
-        // Send to /start to generate starting scenario
+        // 📤 POST to /start with the result
         const startRes = await fetch("/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -128,12 +135,12 @@
           return;
         }
 
+        // ✅ Display the final origin story
         output.textContent += `\n🚪 Alternate Start:\n${JSON.stringify(startData, null, 2)}`;
       } catch (err) {
         output.textContent = "❌ Unexpected Error: " + err;
       }
     }
-
   </script>
 </body>
 </html>
