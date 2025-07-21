@@ -26,7 +26,15 @@
   <h2>Response:</h2>
   <pre id="output">{ waiting for response... }</pre>
 
+  <!-- 🔁 Reroll button, hidden by default -->
+  <button id="reroll" onclick="rerollStart()" style="display: none;">🔁 Reroll Starting Condition</button>
+  <!-- 🎮 Start Game button, hidden by default -->
+  <button id="startGame" onclick="startGame()" style="display: none;">🎮 Start Game</button>
+
   <script>
+    let lastPersonality = null; // 🧠 Stores the last analyzed personality result
+    let lastStartData = null; // 🧠 Stores the last starting conditions
+
     // 🔄 STEP 1: Load Questions
     async function loadQuestions() {
     const res = await fetch("/questions");
@@ -75,6 +83,8 @@
         });
 
         const personality = await res.json();
+        lastPersonality = personality;  // For passing it to the next page: game page
+
         console.log("🧠 Personality analysis:", personality);
 
         if (personality.error) {
@@ -99,6 +109,7 @@
         });
 
         const startData = await startRes.json();
+        lastStartData = startData;  // For passing it to the next page: game page
         console.log("🚪 Alternate Start:", startData);
 
         if (startData.error) {
@@ -108,10 +119,68 @@
 
         // ✅ Display the final origin story
         output.textContent += `\n🚪 Alternate Start:\n${JSON.stringify(startData, null, 2)}`;
+        // ✅ Show reroll and start game button
+        document.getElementById("reroll").style.display = "inline-block";
+        document.getElementById("startGame").style.display = "inline-block";
       } catch (err) {
         output.textContent = "❌ Unexpected Error: " + err;
       }
     }
+
+    async function rerollStart() {
+      if (!lastPersonality) {
+        output.textContent = "⚠️ Cannot reroll: no personality data found.";
+        return;
+      }
+
+      output.textContent = "🔁 Rerolling alternate start...";
+
+      try {
+        const res = await fetch("/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            archetype: lastPersonality.archetype,
+            bravery: lastPersonality.bravery,
+            empathy: lastPersonality.empathy,
+            curiosity: lastPersonality.curiosity,
+            logic: lastPersonality.logic
+          }),
+        });
+
+        const startData = await res.json();
+
+        if (startData.error) {
+          output.textContent = "❌ Error during reroll: " + startData.error;
+          return;
+        }
+
+        output.textContent += `\n\n🔁 New Alternate Start:\n${JSON.stringify(startData, null, 2)}`;
+      } catch (err) {
+        output.textContent = "❌ Unexpected reroll error: " + err;
+      }
+    }
+
+    function startGame() {
+      if (!lastPersonality || !lastStartData) {
+        alert("Missing personality or start data!");
+        return;
+      }
+
+      // Combine and encode all data
+      const gameData = {
+        personality: lastPersonality,
+        start: lastStartData
+      };
+
+      const encoded = encodeURIComponent(JSON.stringify(gameData));
+
+      // Navigate to game.html with data in query string
+      window.location.href = `static/game.html?data=${encoded}`;
+
+    }
+
+    
   </script>
 </body>
 </html>

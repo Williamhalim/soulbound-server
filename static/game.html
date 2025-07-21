@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Life Simulator Game</title>
+</head>
+<body>
+  <h1>🌱 Life Simulator</h1>
+  <pre id="gameData">Loading...</pre>
+
+  <script>
+    // Parse query param
+    const params = new URLSearchParams(window.location.search);
+    const rawData = params.get("data");
+
+    if (rawData) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(rawData));
+        document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
+      }
+    } else {
+      document.getElementById("gameData").textContent = "⚠️ No data received.";
+    }
+  </script>
+</body>
+</html>

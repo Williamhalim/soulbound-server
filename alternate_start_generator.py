@@ -34,10 +34,10 @@ Available archetypes (do NOT use them to assign roles, but use them as thematic 
 
     # 🧠 Prompt sent to the LLM to generate the narrative
     prompt = f"""
-You are a narrative generator for a game that begins with a randomized "alternate start" scenario.
+You are a narrative generator for a game that begins with a randomized "Skyrim alternate start" scenario.
 
 You will be given the player’s personality archetype and stats.
-Generate a short, immersive starting scenario for the player’s life, using a random time period between Ancient Egypt and the year 2250.
+Generate a short, immersive starting scenario for the player’s life, using a random time period between 6000BCE and the year 2250.
 
 The result must be a valid JSON object with 4 keys:
 - "time_period" (string)

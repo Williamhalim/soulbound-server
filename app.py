@@ -12,57 +12,42 @@ app = Flask(__name__, static_folder="static")
 def index():
     return send_from_directory("static", "index.html")
 
-# 🔧 Utility function to extract exactly 3 clean questions from raw LLM response
-def extract_questions_from_text(raw):
-    # Step 1: Clean typical LLM formatting artifacts
-    raw = raw.strip()
-    raw = raw.replace("```json", "").replace("```", "")
-    raw = raw.replace("\\n", " ").replace("\n", " ")
-    raw = raw.replace("\"", '"').replace("'", '"')
+def parse_questions(raw):
+    if not isinstance(raw, str):
+        raise ValueError("Invalid LLM response format")
 
-    # Step 2: Extract strings between quotes (length between 10–500 chars)
-    question_regex = re.findall(r'"([^"\n\r]{10,500}?)"', raw)
-    cleaned = [q.strip() for q in question_regex if len(q.strip()) > 10]
+    # Step 1: Clean known formatting artifacts
+    raw = raw.strip().replace("```json", "").replace("```", "")
+    raw = re.sub(r'\\n', '', raw)
+    raw = raw.replace('\\"', '"')
+    raw = raw.strip('"')
 
-    if len(cleaned) >= 3:
-        return cleaned[:3]  # Return only the first 3
-    raise ValueError("Could not extract 3 valid questions")
+    # Step 2: Attempt to parse JSON (in case it's a list)
+    data = json.loads(raw)
+
+    # Step 3: Handle double-encoded case
+    if isinstance(data, str) and data.strip().startswith("["):
+        data = json.loads(data)
+
+    # Step 4: If we got a list, validate it
+    if isinstance(data, list):
+        clean_questions = [q.strip() for q in data if isinstance(q, str) and len(q.strip()) > 20]
+        if len(clean_questions) == 3:
+            return clean_questions
+        else:
+            raise ValueError("Incomplete or malformed questions")
+    else:
+        raise ValueError("Not a list")
 
 # 🎯 Route to generate and return 3 personality test questions
 @app.route("/questions")
 def questions():
     raw = generate_questions()
 
-    # Ensure LLM response is a string
-    if not isinstance(raw, str):
-        return jsonify({"error": "Invalid LLM response format"}), 500
-
     try:
-        # Step 1: Clean known formatting artifacts
-        raw = raw.strip().replace("```json", "").replace("```", "")
-        raw = re.sub(r'\\n', '', raw)
-        raw = raw.replace('\\"', '"')
-        raw = raw.strip('"')
-
-        # Step 2: Attempt to parse JSON (in case it's a list)
-        data = json.loads(raw)
-
-        # Step 3: Handle double-encoded case
-        if isinstance(data, str) and data.strip().startswith("["):
-            data = json.loads(data)
-
-        # Step 4: If we got a list, validate it
-        if isinstance(data, list):
-            clean_questions = [q.strip() for q in data if isinstance(q, str) and len(q.strip()) > 20]
-            if len(clean_questions) == 3:
-                return jsonify(clean_questions)
-            else:
-                raise ValueError("Incomplete or malformed questions")
-        else:
-            raise ValueError("Not a list")
-
+        questions = parse_questions(raw)
+        return jsonify(questions)
     except Exception as e:
-        # 🚨 Log parsing errors
         print("❌ Failed to parse and clean LLM response:", e)
         print("⚠️ Raw content was:\n", raw)
         return jsonify({"error": "Could not parse LLM response", "raw": raw}), 500
@@ -92,7 +77,7 @@ def analyze():
         print("❌ Exception during parsing/analyzing:", e)
         return jsonify({"error": "Failed to parse trait response", "details": str(e)})
 
-# 🚪 Generate an "alternate start" life scenario for the player based on archetype
+# 🚪 Generate a "Skyrim alternate start" life scenario for the player based on archetype
 @app.route("/start", methods=["POST"])
 def start():
     data = request.get_json()
