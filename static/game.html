@@ -3,124 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Life Simulator Game</title>
-  <style>
-    /* Wrapper is for dividing the screen into two-halves: the player stats and the quiz */
-    .wrapper {
-      display: flex;
-      width: 100vw; /* full screen width */
-      height: 100vh; /* optional: full screen height */
-    }
-
-    .game-stats, .carousel-container {
-      width: 50%;
-      box-sizing: border-box; /* ensures padding/border don't cause overflow */
-      padding: 20px;
-      border: 1px solid #ccc;
-      white-space: normal;
-      word-wrap: break-word; /* or overflow-wrap: break-word */
-    }
-
-    /* Optional: visual distinction */
-    .game-stats {
-      background-color: #f0f0f0;
-    }
-
-    .carousel-container {
-      background-color: #ffffff;
-    }
-
-    @media (max-width: 768px) {
-      .wrapper {
-        flex-direction: column;
-      }
-    }
-
-    /* Limit text overflow inside game-stats */
-    .game-stats {
-      white-space: pre-wrap;     /* Preserve line breaks, wrap long lines */
-      word-wrap: break-word;     /* Break long words */
-      overflow-wrap: break-word; /* Ensures compatibility */
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-    }
-
-    .carousel-container {
-      width: 50%;
-      max-width: none;
-      border-radius: 10px;
-      padding: 2rem;
-      background: white;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      overflow: auto;
-      box-sizing: border-box;
-    }
-
-    .slide {
-      display: none;
-      animation: fade 0.5s ease-in-out;
-    }
-
-    .slide.active {
-      display: block;
-    }
-
-    @keyframes fade {
-      from { opacity: 0; transform: translateX(30px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    .question-title {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: block;
-      margin: 0.5rem 0;
-      cursor: pointer;
-    }
-
-    .navigation {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 2rem;
-    }
-
-    button {
-      padding: 0.5rem 1.5rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .btn-back {
-      background-color: #ccc;
-    }
-
-    .btn-next {
-      background-color: #007bff;
-      color: white;
-    }
-
-    .btn-submit {
-      background-color: #28a745;
-      color: white;
-      width: 100%;
-    }
-
-    .json-output {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-    }
-  </style>
+  <link rel='stylesheet' type='text/css' href='game.css'>
 </head>
 <body>
   <div class="wrapper">
@@ -129,7 +12,7 @@
       <pre class="json-output" id="gameData">Loading...</pre>
     </div>
 
-    <div class="carousel-container">
+    <div class="quiz-container">
       <form id="quizForm" action="endgame.html" method="GET">
         <!-- Question 1 -->
         <div class="slide active">
@@ -181,62 +64,7 @@
       </form>
     </div>
   </div>
-  <script>
-    // Parse query param code starts here
-    const params = new URLSearchParams(window.location.search);
-    const rawData = params.get("data");
 
-    if (rawData) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(rawData));
-        document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
-      } catch (err) {
-        document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
-      }
-    } else {
-      document.getElementById("gameData").textContent = "⚠️ No data received.";
-    }
-    // Parse query param code ends here
-
-    // Slide animation code begins here
-    let currentSlide = 0;
-    const slides = document.querySelectorAll('.slide');
-    const nextBtn = document.querySelector('.btn-next');
-    const backBtn = document.querySelector('.btn-back');
-    const submitBtn = document.querySelector('.btn-submit');
-
-    function showSlide(index) {
-      slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-      });
-
-      backBtn.style.display = index === 0 ? 'none' : 'inline-block';
-      nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
-      submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
-    }
-
-    function nextSlide() {
-      const currentInputs = slides[currentSlide].querySelectorAll('input[type="radio"]');
-      const oneChecked = Array.from(currentInputs).some(input => input.checked);
-      if (!oneChecked) {
-        alert("Please select an option.");
-        return;
-      }
-      if (currentSlide < slides.length - 1) {
-        currentSlide++;
-        showSlide(currentSlide);
-      }
-    }
-
-    function prevSlide() {
-      if (currentSlide > 0) {
-        currentSlide--;
-        showSlide(currentSlide);
-      }
-    }
-
-    showSlide(currentSlide);
-    // Slide animation code ends here
-  </script>
+  <script src="game.js"></script>
 </body>
 </html>

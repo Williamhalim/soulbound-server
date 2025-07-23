@@ -1,30 +1,178 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Test</title>
-  <style>
-    .wrapper {
-      display: flex;
-      width: 100vw; /* full screen width */
-      height: 100vh; /* optional: full screen height */
-    }
-
-    .box {
-      width: 50%;
-      box-sizing: border-box; /* ensures padding/border don't cause overflow */
-      padding: 20px;
-      border: 1px solid #ccc;
-      white-space: normal;
-      word-wrap: break-word; /* or overflow-wrap: break-word */
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Life Simulator Game</title>
+  <link rel='stylesheet' type='text/css' href='game.css'>
 </head>
 <body>
   <div class="wrapper">
-    <div class="box">This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. This is a very long text that should wrap inside this first div without causing overflow. </div>
-    <div class="box">This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. This is another long piece of text that should also wrap nicely within its div. </div>
+    <div class="game-stats">
+      <h1>Soulbound - Live a Thousand Lives</h1>
+      <pre class="json-output" id="gameData">Loading...</pre>
+    </div>
+
+    <div class="quiz-container">
+      <form id="quizForm" action="endgame.html" method="GET">
+        <!-- Question 1 -->
+        <div class="slide active">
+          <div class="question-title">1. What is your favorite color?</div>
+          <label><input type="radio" name="q1" value="Red" required> Red</label>
+          <label><input type="radio" name="q1" value="Blue"> Blue</label>
+          <label><input type="radio" name="q1" value="Green"> Green</label>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="slide">
+          <div class="question-title">2. Choose a season:</div>
+          <label><input type="radio" name="q2" value="Spring" required> Spring</label>
+          <label><input type="radio" name="q2" value="Summer"> Summer</label>
+          <label><input type="radio" name="q2" value="Winter"> Winter</label>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="slide">
+          <div class="question-title">3. Pick a pet:</div>
+          <label><input type="radio" name="q3" value="Dog" required> Dog</label>
+          <label><input type="radio" name="q3" value="Cat"> Cat</label>
+          <label><input type="radio" name="q3" value="Bird"> Bird</label>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="slide">
+          <div class="question-title">4. (Placeholder) Favorite time of day?</div>
+          <label><input type="radio" name="q4" value="Morning" required> Morning</label>
+          <label><input type="radio" name="q4" value="Afternoon"> Afternoon</label>
+          <label><input type="radio" name="q4" value="Night"> Night</label>
+        </div>
+
+        <!-- Question 5 (4 choices) -->
+        <div class="slide">
+          <div class="question-title">5. (Placeholder) Choose a superpower:</div>
+          <label><input type="radio" name="q5" value="Invisibility" required> Invisibility</label>
+          <label><input type="radio" name="q5" value="Flight"> Flight</label>
+          <label><input type="radio" name="q5" value="Time Travel"> Time Travel</label>
+          <label><input type="radio" name="q5" value="Super Strength"> Super Strength</label>
+        </div>
+
+        <div class="navigation">
+          <button type="button" class="btn-back" onclick="prevSlide()">Back</button>
+          <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
+        </div>
+
+        <button type="submit" class="btn-submit" style="display: none;">Submit</button>
+      </form>
+    </div>
   </div>
-  <script></script>
+
+  <script>
+
+    // Parse query param code starts here
+    const params = new URLSearchParams(window.location.search);
+    const rawData = params.get("data");
+
+    if (rawData) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(rawData));
+        document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
+      }
+    } else {
+      document.getElementById("gameData").textContent = "⚠️ No data received.";
+    }
+    // Parse query param code ends here
+
+    // Slide animation code begins here
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const nextBtn = document.querySelector('.btn-next');
+    const backBtn = document.querySelector('.btn-back');
+    const submitBtn = document.querySelector('.btn-submit');
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+
+      backBtn.style.display = index === 0 ? 'none' : 'inline-block';
+      nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
+      submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
+    }
+
+    function nextSlide() {
+      const currentInputs = slides[currentSlide].querySelectorAll('input[type="radio"]');
+      const oneChecked = Array.from(currentInputs).some(input => input.checked);
+      if (!oneChecked) {
+        alert("Please select an option.");
+        return;
+      }
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        showSlide(currentSlide);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        showSlide(currentSlide);
+      }
+    }
+
+    showSlide(currentSlide);
+    // Slide animation code ends here
+
+    // Parse quiz from JSON starts here
+
+    const quizData = [
+      {
+        question: "What is your favorite music genre?",
+        options: ["Classical", "Rock", "Jazz"]
+      },
+      {
+        question: "What's your favorite food?:",
+        options: ["Soupy", "Stir-fry", "Spicy"]
+      },
+      {
+        question: "Favorite time of the day?:",
+        options: ["Sunrise", "Daytime", "Sunset", "Nighttime"]
+      }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const slides = document.querySelectorAll(".slide");
+
+      quizData.forEach((q, i) => {
+        const slide = slides[i];
+        if (!slide) return;
+
+        // Set question text
+        const title = slide.querySelector(".question-title");
+        if (title) title.textContent = `${i + 1}. ${q.question}`;
+
+        // Remove existing labels (in case they were hardcoded)
+        slide.querySelectorAll("label").forEach(label => label.remove());
+
+        // Add choices
+        q.options.forEach((option, j) => {
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+
+          input.type = "radio";
+          input.name = `q${i + 1}`;
+          input.value = option;
+          if (j === 0) input.required = true;
+
+          label.appendChild(input);
+          label.append(` ${option}`);
+          slide.appendChild(label);
+        });
+      });
+    });
+
+    // Parse quiz from JSON ends here
+
+  </script>
 </body>
 </html>
