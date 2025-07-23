@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Results</title>
+</head>
+<body>
+  <h1>Your Answers:</h1>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.write("<ul>");
+    for (const [key, value] of params.entries()) {
+      document.write(`<li><strong>${key}</strong>: ${value}</li>`);
+    }
+    document.write("</ul>");
+  </script>
+</body>
+</html>
