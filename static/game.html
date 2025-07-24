@@ -15,7 +15,7 @@
     <div class="quiz-container">
       <form id="quizForm" action="endgame.html" method="GET">
         <!-- Question 1 -->
-        <div class="slide active">
+        <div class="slide active" id="q1-slide">
           <div class="question-title">1. What is your favorite color?</div>
           <label><input type="radio" name="q1" value="Red" required> Red</label>
           <label><input type="radio" name="q1" value="Blue"> Blue</label>
@@ -24,7 +24,7 @@
 
         <!-- Question 2 -->
         <div class="slide">
-          <div class="question-title">2. Choose a season:</div>
+          <div class="question-title" id="q2-slide">2. Choose a season:</div>
           <label><input type="radio" name="q2" value="Spring" required> Spring</label>
           <label><input type="radio" name="q2" value="Summer"> Summer</label>
           <label><input type="radio" name="q2" value="Winter"> Winter</label>
@@ -32,15 +32,15 @@
 
         <!-- Question 3 -->
         <div class="slide">
-          <div class="question-title">3. Pick a pet:</div>
+          <div class="question-title" id="q3-slide">3. Pick a pet:</div>
           <label><input type="radio" name="q3" value="Dog" required> Dog</label>
           <label><input type="radio" name="q3" value="Cat"> Cat</label>
-          <label><input type="radio" name="q3" value="Bird"> Bird</label>
+          <label><input type="radio" name="q3" value="Bird"> Rabbit</label>
         </div>
 
         <!-- Question 4 -->
         <div class="slide">
-          <div class="question-title">4. Favorite time of day?</div>
+          <div class="question-title" id="q4-slide">4. Favorite time of day?</div>
           <label><input type="radio" name="q4" value="Morning" required> Morning</label>
           <label><input type="radio" name="q4" value="Afternoon"> Afternoon</label>
           <label><input type="radio" name="q4" value="Night"> Night</label>
@@ -48,7 +48,7 @@
 
         <!-- Question 5 (4 choices) -->
         <div class="slide">
-          <div class="question-title">5. Choose a superpower:</div>
+          <div class="question-title" id="q5-slide">5. Choose a superpower:</div>
           <label><input type="radio" name="q5" value="Invisibility" required> Invisibility</label>
           <label><input type="radio" name="q5" value="Flight"> Flight</label>
           <label><input type="radio" name="q5" value="Time Travel"> Time Travel</label>

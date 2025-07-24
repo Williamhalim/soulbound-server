@@ -56,50 +56,82 @@ showSlide(currentSlide);
 
 // Parse quiz from JSON starts here
 
-const quizData = [
-  {
-    question: "What is your favorite music genre?",
-    options: ["Classical", "Rock", "Jazz"]
-  },
-  {
-    question: "What's your favorite food?:",
-    options: ["Soupy", "Stir-fry", "Spicy"]
-  },
-  {
-    question: "Favorite time of the day?:",
-    options: ["Sunrise", "Daytime", "Sunset", "Nighttime"]
-  }
-];
+// Test quiz data
+// const quizData = [
+//   {
+//     question: "What is your favorite music genre?",
+//     options: ["Classical", "Rock", "Jazz"]
+//   },
+//   {
+//     question: "What's your favorite food?:",
+//     options: ["Soupy", "Stir-fry", "Spicy"]
+//   },
+//   {
+//     question: "Favorite music instrument?:",
+//     options: ["Piano", "Guitar", "Drums", "Violin"]
+//   }
+// ];
 
-document.addEventListener("DOMContentLoaded", () => {
-  const slides = document.querySelectorAll(".slide");
+// Fetch quiz questions from Flask
+fetch('/questions') // Step 1: Ask Flask for questions
+  .then(response => response.json()) // Step 2: Parse JSON response
+  .then(data => {
+    data.forEach((question, index) => {
+      const qNum = index + 1;
 
-  quizData.forEach((q, i) => {
-    const slide = slides[i];
-    if (!slide) return;
+      // Get the title and all choice elements
+      const titleEl = document.getElementById(`q${qNum}-title`);
+      const options = document.querySelectorAll(`.q${qNum}-option`);
+      const radios = document.getElementsByName(`q${qNum}`);
 
-    // Set question text
-    const title = slide.querySelector(".question-title");
-    if (title) title.textContent = `${i + 1}. ${q.question}`;
+      if (titleEl && options.length && radios.length) {
+        // Set question text
+        titleEl.textContent = `${qNum}. ${question.question}`;
 
-    // Remove existing labels (in case they were hardcoded)
-    slide.querySelectorAll("label").forEach(label => label.remove());
+        // Set each choice's label and value
+        question.choices.forEach((choice, i) => {
+          options[i].textContent = choice;
+          radios[i].value = choice;
+        });
+      }
+    });
+  })
+  .catch(err => {
+    console.error("Failed to load questions:", err);
+  });
 
-    // Add choices
-    q.options.forEach((option, j) => {
-      const label = document.createElement("label");
-      const input = document.createElement("input");
 
-      input.type = "radio";
+
+// Dynamically render each question and its options into HTML
+function renderQuiz(questions) {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+
+  questions.forEach((q, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    if (i === 0) slide.classList.add('active');  // Only first question visible initially
+
+    const title = document.createElement('div');
+    title.className = 'question-title';
+    title.textContent = `${i + 1}. ${q.question}`;
+    slide.appendChild(title);
+
+    // Render each option as a radio button
+    q.options.forEach((opt, j) => {
+      const label = document.createElement('label');
+      const input = document.createElement('input');
+      input.type = 'radio';
       input.name = `q${i + 1}`;
-      input.value = option;
-      if (j === 0) input.required = true;
-
+      input.value = opt;
+      if (j === 0) input.required = true;  // Make at least one option required
       label.appendChild(input);
-      label.append(` ${option}`);
+      label.append(` ${opt}`);
       slide.appendChild(label);
     });
+
+    container.appendChild(slide);
   });
-});
+}
 
 // Parse quiz from JSON ends here

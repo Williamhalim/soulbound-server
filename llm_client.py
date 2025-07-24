@@ -10,6 +10,8 @@ import re
 from dotenv import load_dotenv
 
 # Load API key from .env file
+from flask import jsonify, request
+
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -128,3 +130,69 @@ Answers:
             "archetype": "Unknown",
             "error": "LLM call failed"
         }
+
+def generate_game_quiz(topic):
+    topic = request.form.get("topic")
+    if not topic:
+        return jsonify({"error": "No topic provided"}), 400
+
+    prompt = f"""
+Generate exactly 5 multiple choice questions on the topic: {topic}.
+Each question should have:
+- a 'question' string
+- an 'options' array of 4 strings (shuffled)
+- an 'answer' string (must match one of the options)
+
+Return the output as a JSON array like:
+[
+  {{
+    "question": "What is ...?",
+    "options": ["A", "B", "C", "D"],
+    "answer": "B"
+  }},
+  ...
+]
+Do NOT wrap the output in Markdown (no ```json).
+    """
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "HTTP-Referer": "http://localhost:5000",  # For local dev
+        "X-Title": "MCQ Generator"
+    }
+
+    data = {
+        "model": "openai/gpt-3.5-turbo",  # or other OpenRouter-supported models
+        "messages": [{"role": "user", "content": prompt}]
+    }
+
+    try:
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions",
+                                 headers=headers, json=data)
+        response.raise_for_status()
+
+        content = response.json()["choices"][0]["message"]["content"]
+        print("==== Raw LLM Output ====")
+        print(content)
+
+        # Clean markdown if present
+        content = content.strip().replace("```json", "").replace("```", "")
+
+        # Parse JSON safely
+        questions = json.loads(content)
+
+        # Optional: validate question structure
+        for q in questions:
+            assert "question" in q and "options" in q and "answer" in q
+            assert isinstance(q["options"], list) and len(q["options"]) == 4
+            assert q["answer"] in q["options"]
+
+        return jsonify({"questions": questions})
+
+    except Exception as e:
+        print("==== Error ====")
+        print(str(e))
+        if 'response' in locals():
+            print("==== Response Text ====")
+            print(response.text)
+        return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500

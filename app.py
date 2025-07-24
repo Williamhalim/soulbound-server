@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, request, jsonify
-from llm_client import generate_questions, get_personality_traits
+from llm_client import generate_questions, get_personality_traits, generate_game_quiz
 from alternate_start_generator import generate_alternate_start
 import json
 import re
@@ -38,6 +38,28 @@ def parse_questions(raw):
             raise ValueError("Incomplete or malformed questions")
     else:
         raise ValueError("Not a list")
+
+def parse_game_quiz(raw):
+    html_output = ""
+
+    for i, question_data in enumerate(raw, start=1):
+        question_text = question_data["question"]
+        options = question_data["options"]
+
+        # First slide gets the "active" class
+        slide_class = "slide active" if i == 1 else "slide"
+
+        html_output += f'<div class="{slide_class}">\n'
+        html_output += f'  <div class="question-title">{i}. {question_text}</div>\n'
+
+        for j, option in enumerate(options):
+            # Only the first option has `required`
+            required_attr = ' required' if j == 0 else ''
+            html_output += f'  <label><input type="radio" name="q{i}" value="{option}"{required_attr}> {option}</label>\n'
+
+        html_output += '</div>\n\n'
+
+    return html_output
 
 # 🎯 Route to generate and return 3 personality test questions
 @app.route("/questions")
@@ -136,6 +158,16 @@ def determine_archetype(stats):
         "secondary": secondary,
         "stats": safe_stats
     }
+
+@app.route("/generate", methods=["POST"])
+def generate():
+    topic = request.form.get("topic")
+    if not topic:
+        return jsonify({"error": "No topic provided"}), 400
+
+    # Directly return the Response from generate_game_quiz()
+    return generate_game_quiz(topic)
+
 
 # 🔁 Run the app in debug mode when executed directly
 if __name__ == "__main__":

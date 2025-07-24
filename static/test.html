@@ -7,172 +7,174 @@
 </head>
 <body>
   <div class="wrapper">
+    <!-- Game data & story -->
     <div class="game-stats">
       <h1>Soulbound - Live a Thousand Lives</h1>
       <pre class="json-output" id="gameData">Loading...</pre>
     </div>
 
+    <!-- Player choices -->
     <div class="quiz-container">
-      <form id="quizForm" action="endgame.html" method="GET">
-        <!-- Question 1 -->
-        <div class="slide active">
-          <div class="question-title">1. What is your favorite color?</div>
-          <label><input type="radio" name="q1" value="Red" required> Red</label>
-          <label><input type="radio" name="q1" value="Blue"> Blue</label>
-          <label><input type="radio" name="q1" value="Green"> Green</label>
-        </div>
-
-        <!-- Question 2 -->
-        <div class="slide">
-          <div class="question-title">2. Choose a season:</div>
-          <label><input type="radio" name="q2" value="Spring" required> Spring</label>
-          <label><input type="radio" name="q2" value="Summer"> Summer</label>
-          <label><input type="radio" name="q2" value="Winter"> Winter</label>
-        </div>
-
-        <!-- Question 3 -->
-        <div class="slide">
-          <div class="question-title">3. Pick a pet:</div>
-          <label><input type="radio" name="q3" value="Dog" required> Dog</label>
-          <label><input type="radio" name="q3" value="Cat"> Cat</label>
-          <label><input type="radio" name="q3" value="Bird"> Bird</label>
-        </div>
-
-        <!-- Question 4 -->
-        <div class="slide">
-          <div class="question-title">4. (Placeholder) Favorite time of day?</div>
-          <label><input type="radio" name="q4" value="Morning" required> Morning</label>
-          <label><input type="radio" name="q4" value="Afternoon"> Afternoon</label>
-          <label><input type="radio" name="q4" value="Night"> Night</label>
-        </div>
-
-        <!-- Question 5 (4 choices) -->
-        <div class="slide">
-          <div class="question-title">5. (Placeholder) Choose a superpower:</div>
-          <label><input type="radio" name="q5" value="Invisibility" required> Invisibility</label>
-          <label><input type="radio" name="q5" value="Flight"> Flight</label>
-          <label><input type="radio" name="q5" value="Time Travel"> Time Travel</label>
-          <label><input type="radio" name="q5" value="Super Strength"> Super Strength</label>
-        </div>
-
-        <div class="navigation">
-          <button type="button" class="btn-back" onclick="prevSlide()">Back</button>
-          <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-        </div>
-
-        <button type="submit" class="btn-submit" style="display: none;">Submit</button>
-      </form>
+      <form id="promptForm">
+        <label>Enter a topic:</label>
+        <input type="text" name="topic" required>
+        <button type="submit">Generate Questions</button>
+    </form>
+    <div id="quizContainer" style="margin-top: 20px;"></div>
+    <div id="resultContainer" style="margin-top: 20px;"></div>
     </div>
   </div>
 
-  <script>
+<script>
+// Parse player data code starts here
+const params = new URLSearchParams(window.location.search);
+const rawData = params.get("data");
 
-    // Parse query param code starts here
-    const params = new URLSearchParams(window.location.search);
-    const rawData = params.get("data");
+if (rawData) {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(rawData));
+    document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
+  } catch (err) {
+    document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
+  }
+} else {
+  document.getElementById("gameData").textContent = "⚠️ No data received.";
+}
+// Parse player data code ends here
 
-    if (rawData) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(rawData));
-        document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
-      } catch (err) {
-        document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
-      }
-    } else {
-      document.getElementById("gameData").textContent = "⚠️ No data received.";
-    }
-    // Parse query param code ends here
+/*// Slide animation code begins here
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const nextBtn = document.querySelector('.btn-next');
+const backBtn = document.querySelector('.btn-back');
+const submitBtn = document.querySelector('.btn-submit');
 
-    // Slide animation code begins here
-    let currentSlide = 0;
-    const slides = document.querySelectorAll('.slide');
-    const nextBtn = document.querySelector('.btn-next');
-    const backBtn = document.querySelector('.btn-back');
-    const submitBtn = document.querySelector('.btn-submit');
+function showSlide(index) {
+  slides.forEach((slide, i) => {
+    slide.classList.toggle('active', i === index);
+  });
 
-    function showSlide(index) {
-      slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-      });
+  backBtn.style.display = index === 0 ? 'none' : 'inline-block';
+  nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
+  submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
+}
 
-      backBtn.style.display = index === 0 ? 'none' : 'inline-block';
-      nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
-      submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
-    }
-
-    function nextSlide() {
-      const currentInputs = slides[currentSlide].querySelectorAll('input[type="radio"]');
-      const oneChecked = Array.from(currentInputs).some(input => input.checked);
-      if (!oneChecked) {
-        alert("Please select an option.");
-        return;
-      }
-      if (currentSlide < slides.length - 1) {
-        currentSlide++;
-        showSlide(currentSlide);
-      }
-    }
-
-    function prevSlide() {
-      if (currentSlide > 0) {
-        currentSlide--;
-        showSlide(currentSlide);
-      }
-    }
-
+function nextSlide() {
+  const currentInputs = slides[currentSlide].querySelectorAll('input[type="radio"]');
+  const oneChecked = Array.from(currentInputs).some(input => input.checked);
+  if (!oneChecked) {
+    alert("Please select an option.");
+    return;
+  }
+  if (currentSlide < slides.length - 1) {
+    currentSlide++;
     showSlide(currentSlide);
-    // Slide animation code ends here
+  }
+}
 
-    // Parse quiz from JSON starts here
+function prevSlide() {
+  if (currentSlide > 0) {
+    currentSlide--;
+    showSlide(currentSlide);
+  }
+}
 
-    const quizData = [
-      {
-        question: "What is your favorite music genre?",
-        options: ["Classical", "Rock", "Jazz"]
-      },
-      {
-        question: "What's your favorite food?:",
-        options: ["Soupy", "Stir-fry", "Spicy"]
-      },
-      {
-        question: "Favorite time of the day?:",
-        options: ["Sunrise", "Daytime", "Sunset", "Nighttime"]
-      }
-    ];
+showSlide(currentSlide);
+// Slide animation code ends here*/
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const slides = document.querySelectorAll(".slide");
+// MCQ code START
 
-      quizData.forEach((q, i) => {
-        const slide = slides[i];
-        if (!slide) return;
+let currentQuestions = [];
 
-        // Set question text
-        const title = slide.querySelector(".question-title");
-        if (title) title.textContent = `${i + 1}. ${q.question}`;
+document.getElementById("promptForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const topic = formData.get("topic");
 
-        // Remove existing labels (in case they were hardcoded)
-        slide.querySelectorAll("label").forEach(label => label.remove());
+    const quizDiv = document.getElementById("quizContainer");
+    const resultDiv = document.getElementById("resultContainer");
+    resultDiv.innerHTML = "";
+    quizDiv.innerHTML = "<p>Generating questions...</p>";
 
-        // Add choices
-        q.options.forEach((option, j) => {
-          const label = document.createElement("label");
-          const input = document.createElement("input");
-
-          input.type = "radio";
-          input.name = `q${i + 1}`;
-          input.value = option;
-          if (j === 0) input.required = true;
-
-          label.appendChild(input);
-          label.append(` ${option}`);
-          slide.appendChild(label);
-        });
-      });
+    const res = await fetch("/generate", {
+        method: "POST",
+        body: formData
     });
 
-    // Parse quiz from JSON ends here
+    const resClone = res.clone();
+    let data;
 
-  </script>
+    try {
+        data = await res.json();
+    } catch (err) {
+        const raw = await resClone.text();
+        quizDiv.innerHTML = `<p style="color:red;">Server did not return valid JSON.</p><pre>${raw}</pre>`;
+        return;
+    }
+
+    if (data.error) {
+        quizDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p><pre>${data.details || ''}</pre>`;
+        return;
+    }
+
+    currentQuestions = data.questions;
+    quizDiv.innerHTML = `<form id="quizForm"></form>`;
+    const quizForm = document.getElementById("quizForm");
+
+    currentQuestions.forEach((q, i) => {
+        const optionsHTML = q.options.map((opt, j) => `
+            <label>
+                <input type="radio" name="q${i}" value="${opt}" required>
+                ${opt}
+            </label><br>`).join("");
+
+        quizForm.innerHTML += `
+            <div style="margin-bottom: 20px;">
+                <strong>Q${i + 1}:</strong> ${q.question}<br>
+                ${optionsHTML}
+            </div>
+        `;
+    });
+
+    quizForm.innerHTML += `<button type="submit">Submit Answers</button>`;
+
+    quizForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        let score = 0;
+        const results = [];
+
+        currentQuestions.forEach((q, i) => {
+            const selected = quizForm.querySelector(`input[name="q${i}"]:checked`);
+            const userAnswer = selected ? selected.value : "";
+            const isCorrect = userAnswer === q.answer;
+
+            results.push({
+                question: q.question,
+                correct: q.answer,
+                selected: userAnswer,
+                isCorrect
+            });
+
+            if (isCorrect) score++;
+        });
+
+        let resultHTML = `<h2>Your Score: ${score} / ${currentQuestions.length}</h2>`;
+        results.forEach((r, i) => {
+            resultHTML += `
+                <div style="margin-bottom: 15px;">
+                    <strong>Q${i + 1}:</strong> ${r.question}<br>
+                    Your answer: <span style="color: ${r.isCorrect ? 'green' : 'red'};">${r.selected || '(blank)'}</span><br>
+                    Correct answer: ${r.correct}
+                </div>
+            `;
+        });
+
+        resultDiv.innerHTML = resultHTML;
+    });
+});
+
+// MCQ code END
+
+</script>
 </body>
 </html>
