@@ -50,8 +50,15 @@ document.getElementById("promptForm").addEventListener("submit", async (e) => {
     const formData = new FormData(e.target);
 
     // Use parsed data to define the topic
-    const archetype = parsed?.personality?.archetype || "mysterious";
-    const topic = `Generate game-like moral dilemma questions for someone with a ${archetype} archetype.`;
+    const archetype   = parsed?.personality?.archetype || "mysterious";
+    const location    = parsed?.start?.location || "unknown";
+    const role        = parsed?.start?.role || "unknown";
+    const situation   = parsed?.start?.situation || "unknown";
+    const timePeriod  = parsed?.start?.time_period || "unknown";
+
+    const topic = `Generate game-like moral dilemma questions for someone with a ${archetype} archetype. The background of the character is as follows- location is ${location}, the player assumes the role of ${role}, situation is- ${situation}, timePeriod is ${timePeriod}.`;
+
+    console.log(topic);
 
     // Inject topic into formData so the backend receives it
     formData.set("topic", topic);
