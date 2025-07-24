@@ -17,7 +17,7 @@
     <div class="quiz-container">
       <form id="promptForm">
         <label>Enter a topic:</label>
-        <input type="text" name="topic" required>
+<!--         <input type="text" name="topic" required> -->
         <button type="submit">Generate Questions</button>
     </form>
     <div id="quizContainer" style="margin-top: 20px;"></div>
@@ -41,48 +41,6 @@ if (rawData) {
   document.getElementById("gameData").textContent = "⚠️ No data received.";
 }
 // Parse player data code ends here
-
-/*// Slide animation code begins here
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-const nextBtn = document.querySelector('.btn-next');
-const backBtn = document.querySelector('.btn-back');
-const submitBtn = document.querySelector('.btn-submit');
-
-function showSlide(index) {
-  slides.forEach((slide, i) => {
-    slide.classList.toggle('active', i === index);
-  });
-
-  backBtn.style.display = index === 0 ? 'none' : 'inline-block';
-  nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
-  submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
-}
-
-function nextSlide() {
-  const currentInputs = slides[currentSlide].querySelectorAll('input[type="radio"]');
-  const oneChecked = Array.from(currentInputs).some(input => input.checked);
-  if (!oneChecked) {
-    alert("Please select an option.");
-    return;
-  }
-  if (currentSlide < slides.length - 1) {
-    currentSlide++;
-    showSlide(currentSlide);
-  }
-}
-
-function prevSlide() {
-  if (currentSlide > 0) {
-    currentSlide--;
-    showSlide(currentSlide);
-  }
-}
-
-showSlide(currentSlide);
-// Slide animation code ends here*/
-
-// MCQ code START
 
 let currentQuestions = [];
 
