@@ -121,49 +121,51 @@
             <label><input type="radio" name="choice" value="bravery:-1"> Abandon your post in fear (-Bravery)</label><br>
         </div>
 
-    <!-- Question 2 -->
-    <div class="slide">
-      <div class="question-title">2. Choose a season:</div>
-      <label><input type="radio" name="q2" value="Spring" required> Spring</label>
-      <label><input type="radio" name="q2" value="Summer"> Summer</label>
-      <label><input type="radio" name="q2" value="Winter"> Winter</label>
-    </div>
+        <!-- Question 2 -->
+        <div class="slide">
+          <div class="question-title">2. Choose a season:</div>
+          <label><input type="radio" name="choice" value="curiosity:1" required> Spring</label>
+          <label><input type="radio" name="choice" value="bravery:1"> Summer</label>
+          <label><input type="radio" name="choice" value="empathy:1"> Autumn</label>
+          <label><input type="radio" name="choice" value="logic:1"> Winter</label>
+        </div>
 
-    <!-- Question 3 -->
-    <div class="slide">
-      <div class="question-title">3. Pick a pet:</div>
-      <label><input type="radio" name="q3" value="Dog" required> Dog</label>
-      <label><input type="radio" name="q3" value="Cat"> Cat</label>
-      <label><input type="radio" name="q3" value="Bird"> Bird</label>
-    </div>
+        <!-- Question 3 -->
+        <div class="slide">
+          <div class="question-title">3. Pick a pet:</div>
+          <label><input type="radio" name="choice" value="bravery:1" required> Dog</label>
+          <label><input type="radio" name="choice" value="logic:1"> Cat</label>
+          <label><input type="radio" name="choice" value="curiosity:1"> Bird</label>
+          <label><input type="radio" name="choice" value="empathy:1"> Rabbit</label>
+        </div>
 
-    <!-- Question 4 -->
-    <div class="slide">
-      <div class="question-title">4. Favorite time of day?</div>
-      <label><input type="radio" name="q4" value="Morning" required> Morning</label>
-      <label><input type="radio" name="q4" value="Afternoon"> Afternoon</label>
-      <label><input type="radio" name="q4" value="Night"> Night</label>
-    </div>
+        <!-- Question 4 -->
+        <div class="slide">
+          <div class="question-title">4. Favorite time of day?</div>
+          <label><input type="radio" name="choice" value="Morning" required> Morning</label>
+          <label><input type="radio" name="choice" value="Afternoon"> Afternoon</label>
+          <label><input type="radio" name="choice" value="Night"> Night</label>
+        </div>
 
-    <!-- Question 5 (4 choices) -->
-    <div class="slide">
-      <div class="question-title">5. Choose a superpower:</div>
-      <label><input type="radio" name="q5" value="Invisibility" required> Invisibility</label>
-      <label><input type="radio" name="q5" value="Flight"> Flight</label>
-      <label><input type="radio" name="q5" value="Time Travel"> Time Travel</label>
-      <label><input type="radio" name="q5" value="Super Strength"> Super Strength</label>
-    </div>
+        <!-- Question 5 (4 choices) -->
+        <div class="slide">
+          <div class="question-title">5. Choose a superpower:</div>
+          <label><input type="radio" name="choice" value="Invisibility" required> Invisibility</label>
+          <label><input type="radio" name="choice" value="Flight"> Flight</label>
+          <label><input type="radio" name="choice" value="Time Travel"> Time Travel</label>
+          <label><input type="radio" name="choice" value="Super Strength"> Super Strength</label>
+        </div>
 
-    <div class="navigation">
-      <button type="button" class="btn-back" onclick="prevSlide()">Back</button>
-      <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
+        <div class="navigation">
+          <!-- <button type="button" class="btn-back" onclick="prevSlide()">Back</button> -->
+          <button type="button" class="btn-next" id= "btn-next" onclick="nextSlide()">Next</button>
+        </div>
+        <button type="submit" class="btn-submit" style="display: none;">Submit</button>
+          </form>
+          <div id="quizContainer" style="margin-top: 20px;"></div>
+          <div id="resultContainer" style="margin-top: 20px;"></div>
     </div>
-    <button type="submit" class="btn-submit" style="display: none;">Submit</button>
-      </form>
-      <div id="quizContainer" style="margin-top: 20px;"></div>
-      <div id="resultContainer" style="margin-top: 20px;"></div>
-    </div>
-  </div>
+</div>
 
   <script>
     // Initial stat values (0–10 scale)
@@ -215,7 +217,7 @@
     }
 
     // Handle quiz submission
-    document.getElementById("promptForm").addEventListener("submit", function(e) {
+    document.getElementById("btn-next").addEventListener("click", function (e)  {
       e.preventDefault();
 
       const choice = document.querySelector('input[name="choice"]:checked');
@@ -232,12 +234,15 @@
       }
 
       updateProgressBars();
+
+        // Deselect all inputs with name="choice". It's just to make the slide working properly so feel free to ignore.
+        const choices = document.querySelectorAll('input[name="choice"]');
+        choices.forEach(input => input.checked = false);
     });
 
     // Initial render
     renderGameData();
     renderProgressBars();
-
 
 // Questions slide animation script START
 
@@ -252,7 +257,7 @@
       slide.classList.toggle('active', i === index);
     });
 
-    backBtn.style.display = index === 0 ? 'none' : 'inline-block';
+    // backBtn.style.display = index === 0 ? 'none' : 'inline-block';
     nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
     submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
   }
