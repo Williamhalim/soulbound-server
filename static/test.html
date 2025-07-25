@@ -133,27 +133,30 @@
         <!-- Question 3 -->
         <div class="slide">
           <div class="question-title">3. Pick a pet:</div>
-          <label><input type="radio" name="choice" value="bravery:1" required> Dog</label>
-          <label><input type="radio" name="choice" value="logic:1"> Cat</label>
+          <label><input type="radio" name="choice" value="bravery:2,logic:-1" required> Dog</label>
+          <label><input type="radio" name="choice" value="logic:2,empathy:-1"> Cat</label>
           <label><input type="radio" name="choice" value="curiosity:1"> Bird</label>
-          <label><input type="radio" name="choice" value="empathy:1"> Rabbit</label>
+          <label><input type="radio" name="choice" value="empathy:2,bravery:-1"> Rabbit</label>
         </div>
 
         <!-- Question 4 -->
         <div class="slide">
           <div class="question-title">4. Favorite time of day?</div>
-          <label><input type="radio" name="choice" value="Morning" required> Morning</label>
-          <label><input type="radio" name="choice" value="Afternoon"> Afternoon</label>
-          <label><input type="radio" name="choice" value="Night"> Night</label>
+          <label><input type="radio" name="choice" value="bravery:2,logic:-1" required> Sunrise</label>
+          <label><input type="radio" name="choice" value="curiosity:1"> Morning</label>
+          <label><input type="radio" name="choice" value="empathy:2,bravery:-1"> Afternoon</label>
+          <label><input type="radio" name="choice" value="logic:2,empathy:-1"> Sunset</label>
+          <label><input type="radio" name="choice" value="bravery:2,logic:-1"> Evening</label>
+          <label><input type="radio" name="choice" value="logic:2,empathy:-1"> Midnight</label>
         </div>
 
         <!-- Question 5 (4 choices) -->
         <div class="slide">
           <div class="question-title">5. Choose a superpower:</div>
-          <label><input type="radio" name="choice" value="Invisibility" required> Invisibility</label>
-          <label><input type="radio" name="choice" value="Flight"> Flight</label>
-          <label><input type="radio" name="choice" value="Time Travel"> Time Travel</label>
-          <label><input type="radio" name="choice" value="Super Strength"> Super Strength</label>
+          <label><input type="radio" name="choice" value="bravery:2,logic:-1" required> Invisibility</label>
+          <label><input type="radio" name="choice" value="empathy:2,bravery:-1"> Flight</label>
+          <label><input type="radio" name="choice" value="logic:2,empathy:-1"> Time Travel</label>
+          <label><input type="radio" name="choice" value="curiosity:1"> Super Strength</label>
         </div>
 
         <div class="navigation">
@@ -220,20 +223,23 @@
     document.getElementById("btn-next").addEventListener("click", function (e)  {
       e.preventDefault();
 
-      const choice = document.querySelector('input[name="choice"]:checked');
-      if (!choice) {
-        alert("Please select a choice!");
-        return;
-      }
+        const choice = document.querySelector('input[name="choice"]:checked');
+        if (!choice) {
+          alert("Please select a choice!");
+          return;
+        }
 
-      const [stat, changeStr] = choice.value.split(":");
-      const change = parseInt(changeStr);
+        // NEW: Handle multiple updates like "curiosity:1,bravery:-1"
+        const updates = choice.value.split(",");
+        updates.forEach(update => {
+          const [stat, changeStr] = update.split(":");
+          const change = parseInt(changeStr);
+          if (stat in stats) {
+            stats[stat] = Math.max(0, Math.min(10, stats[stat] + change)); // Clamp between 0 and 10
+          }
+        });
 
-      if (stat in stats) {
-        stats[stat] = Math.max(0, Math.min(10, stats[stat] + change)); // Clamp between 0 and 10
-      }
-
-      updateProgressBars();
+        updateProgressBars();
 
         // Deselect all inputs with name="choice". It's just to make the slide working properly so feel free to ignore.
         const choices = document.querySelectorAll('input[name="choice"]');
