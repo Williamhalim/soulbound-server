@@ -11,10 +11,11 @@ from dotenv import load_dotenv
 
 # Load API key from .env file
 from flask import jsonify, request
-
+# Load API key from .env
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = "mistralai/mistral-7b-instruct"
 
 # === 1. Generate Personality Questions ===
 def generate_questions():
@@ -179,7 +180,7 @@ def generate_game_quiz(topic):
     }
 
     data = {
-        "model": "openai/gpt-3.5-turbo",  # or other OpenRouter-supported models
+        "model": "mistralai/mistral-7b-instruct",  # or other OpenRouter-supported models
         "messages": [{"role": "user", "content": prompt}]
     }
 

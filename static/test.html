@@ -218,9 +218,9 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
     
         quizForm.appendChild(slideDiv);
     });
+    showSlide(currentSlide);
 
-
-    document.getElementById("btn-submit").style.display = "block";
+    // document.getElementById("btn-submit").style.display = "block";
 
     quizForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -241,20 +241,6 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
 
             if (isCorrect) score++;
         });
-
-        let resultHTML = `<h2>Your Score: ${score} / ${currentQuestions.length}</h2>`;
-        results.forEach((r, i) => {
-            resultHTML += `
-                <div style="margin-bottom: 15px;">
-                    <strong>Q${i + 1}:</strong> ${r.question}<br>
-                    Your answer: <span style="color: ${r.isCorrect ? 'green' : 'red'};">${r.selected || '(blank)'}</span><br>
-                    Correct answer: ${r.correct}
-                </div>
-            `;
-        });
-
-        resultContainer.innerHTML = resultHTML;
-        quizForm.style.display = "none";
         document.getElementById("btn-next").style.display = "none";
     });
 });
@@ -330,7 +316,6 @@ document.getElementById("btn-next").addEventListener("click", function (e)  {
       const change = parseInt(changeStr);
       if (stat in stats) {
         stats[stat] = Math.max(0, Math.min(10, stats[stat] + change)); // Clamp between 0 and 10
-        console.log("The stats are: " + stats[stat]);
       }
     });
 
@@ -354,36 +339,44 @@ const backBtn = document.querySelector('.btn-back');
 const submitBtn = document.querySelector('.btn-submit');
 
 function showSlide(index) {
+  const slides = document.querySelectorAll('.slide'); // ⬅️ MOVE THIS HERE
   slides.forEach((slide, i) => {
     slide.classList.toggle('active', i === index);
   });
 
-  // backBtn.style.display = index === 0 ? 'none' : 'inline-block';
-  nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
-  submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
+  console.log("index: " + index + ", slide length: " + slides.length);
+  if (index == slides.length - 1) {
+    nextBtn.style.display = 'none';
+    submitBtn.style.display = 'inline-block';
+  } else {
+    nextBtn.style.display = 'inline-block';
+    submitBtn.style.display = 'none';
+  }
 }
 
 function nextSlide() {
-    const slides = document.querySelectorAll(".slide");
-    if (currentSlide < slides.length - 1) {
-        slides[currentSlide].style.display = "none";
-        currentSlide++;
-        slides[currentSlide].style.display = "block";
-    }
+  const slides = document.querySelectorAll('.slide'); // ⬅️ SAME HERE
+  if (currentSlide < slides.length - 1) {
+    slides[currentSlide].style.display = "none";
+    currentSlide++;
+    slides[currentSlide].style.display = "block";
+  } else if (currentSlide == slides.length - 1){
+    currentSlide++;
+  }
+  showSlide(currentSlide);
 }
 
-function prevSlide() {
-  if (currentSlide > 0) {
-    currentSlide--;
-    showSlide(currentSlide);
-  }
-}
+// function prevSlide() {
+//   if (currentSlide > 0) {
+//     currentSlide--;
+//     showSlide(currentSlide);
+//   }
+// }
 
 function resetSlide(){
   currentSlide = 0;
 }
 
-showSlide(currentSlide);
 // Questions slide animation script END
 </script>
 </body>
