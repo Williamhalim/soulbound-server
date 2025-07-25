@@ -28,17 +28,41 @@
 <script>
 // Parse player data code starts here
 const params = new URLSearchParams(window.location.search);
-const rawData = params.get("data");
+const rawData = {
+  "personality": {
+    "alignment": "good",
+    "archetype": "Guardian",
+    "bravery": 7,
+    "curiosity": 3,
+    "empathy": 8,
+    "logic": 6,
+    "primary": "empathy",
+    "secondary": "bravery",
+    "stats": {
+      "bravery": 7,
+      "curiosity": 3,
+      "empathy": 8,
+      "logic": 6
+    }
+  },
+  "start": {
+    "location": "Khmer Empire, Cambodia",
+    "role": "Governor's Advisor",
+    "situation": "As a guardian with a deep empathy for the people, you have been appointed as a governor's advisor, overseeing the welfare of the kingdom's citizens. However, your bravery and the well-being of your subjects are tested when a drought threatens the survival of the empire, questioning the traditional ways and pushing you to seek unconventional solutions.",
+    "time_period": "10th Century CE"
+  }
+};
+let parsed = null; // Declare parsed globally so it's accessible later
 
 if (rawData) {
-  try {
-    const parsed = JSON.parse(decodeURIComponent(rawData));
+//   try {
+    parsed = rawData; //     parsed = JSON.parse(decodeURIComponent(rawData)); // This is the original code. Disabled for testing.
     document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
-  } catch (err) {
-    document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
-  }
-} else {
-  document.getElementById("gameData").textContent = "⚠️ No data received.";
+//   } catch (err) {
+//     document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
+//   }
+// } else {
+//   document.getElementById("gameData").textContent = "⚠️ No data received.";
 }
 // Parse player data code ends here
 
@@ -47,7 +71,20 @@ let currentQuestions = [];
 document.getElementById("promptForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const topic = formData.get("topic");
+
+    // Use parsed data to define the topic
+    const archetype   = parsed?.personality?.archetype || "mysterious";
+    const location    = parsed?.start?.location || "unknown";
+    const role        = parsed?.start?.role || "unknown";
+    const situation   = parsed?.start?.situation || "unknown";
+    const timePeriod  = parsed?.start?.time_period || "unknown";
+
+    const topic = `Generate game-like moral dilemma questions for someone with a ${archetype} archetype. The background of the character is as follows- location is ${location}, the player assumes the role of ${role}, situation is- ${situation}, timePeriod is ${timePeriod}.`;
+
+    console.log(topic);
+
+    // Inject topic into formData so the backend receives it
+    formData.set("topic", topic);
 
     const quizDiv = document.getElementById("quizContainer");
     const resultDiv = document.getElementById("resultContainer");
@@ -130,9 +167,7 @@ document.getElementById("promptForm").addEventListener("submit", async (e) => {
         resultDiv.innerHTML = resultHTML;
     });
 });
-
-// MCQ code END
-
 </script>
+
 </body>
 </html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Soulbound - Live a Thousand Lives</title>
+  <style>
+    .wrapper {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      padding: 20px;
+      font-family: sans-serif;
+    }
+    .game-stats, .quiz-container {
+      flex: 1;
+    }
+    .progress-bar-container {
+      margin-bottom: 10px;
+    }
+    .progress-label {
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    .progress {
+      background: #eee;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #4caf50;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Game data & story -->
+    <div class="game-stats">
+      <h1>Soulbound - Live a Thousand Lives</h1>
+      <pre class="json-output" id="gameData">Loading...</pre>
+
+      <div id="progressBars">
+        <!-- Progress bars will be inserted here -->
+      </div>
+    </div>
+
+    <!-- Player choices -->
+    <div class="quiz-container">
+      <form id="promptForm">
+        <p>What do you do when your village faces a drought?</p>
+        <label><input type="radio" name="choice" value="bravery:1"> Lead a water-seeking expedition (+Bravery)</label><br>
+        <label><input type="radio" name="choice" value="empathy:1"> Ration fairly among the sick and elderly (+Empathy)</label><br>
+        <label><input type="radio" name="choice" value="logic:1"> Design an irrigation system (+Logic)</label><br>
+        <label><input type="radio" name="choice" value="curiosity:1"> Research forgotten water rituals (+Curiosity)</label><br>
+        <label><input type="radio" name="choice" value="bravery:-1"> Abandon your post in fear (-Bravery)</label><br>
+        <button type="submit" style="margin-top: 10px;">Submit Choice</button>
+      </form>
+
+      <div id="quizContainer" style="margin-top: 20px;"></div>
+      <div id="resultContainer" style="margin-top: 20px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Initial stat values (0–10 scale)
+    const stats = {
+      bravery: 7,
+      curiosity: 3,
+      empathy: 8,
+      logic: 6
+    };
+
+    // Render gameData and progress bars
+    function renderGameData() {
+      document.getElementById("gameData").textContent = JSON.stringify(stats, null, 2);
+    }
+
+    function renderProgressBars() {
+      const container = document.getElementById("progressBars");
+      container.innerHTML = ''; // Clear existing bars
+      for (const key in stats) {
+        const percent = Math.min(100, Math.max(0, stats[key] * 10)); // 0–100%
+        container.innerHTML += `
+          <div class="progress-bar-container">
+            <div class="progress-label" id="label-${key}">${key.charAt(0).toUpperCase() + key.slice(1)} (${stats[key]}/10)</div>
+            <div class="progress">
+              <div class="progress-fill" id="bar-${key}" style="width: ${percent}%;"></div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Update bars after change
+    function updateProgressBars() {
+      for (const key in stats) {
+        const percent = Math.min(100, Math.max(0, stats[key] * 10));
+
+        const bar = document.getElementById(`bar-${key}`);
+        if (bar) {
+          bar.style.width = `${percent}%`;
+        }
+
+        const label = document.getElementById(`label-${key}`);
+        if (label) {
+          label.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)} (${stats[key]}/10)`;
+        }
+      }
+
+      renderGameData();
+    }
+
+    // Handle quiz submission
+    document.getElementById("promptForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const choice = document.querySelector('input[name="choice"]:checked');
+      if (!choice) {
+        alert("Please select a choice!");
+        return;
+      }
+
+      const [stat, changeStr] = choice.value.split(":");
+      const change = parseInt(changeStr);
+
+      if (stat in stats) {
+        stats[stat] = Math.max(0, Math.min(10, stats[stat] + change)); // Clamp between 0 and 10
+      }
+
+      updateProgressBars();
+    });
+
+    // Initial render
+    renderGameData();
+    renderProgressBars();
+  </script>
+</body>
+</html>
