@@ -1,0 +1,139 @@
+    /* Wrapper is for dividing the screen into two-halves: the player stats and the quiz */
+    .wrapper {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      padding: 15px;
+      font-family: sans-serif;
+    }
+
+      /* Limit text overflow inside game-stats */
+    .game-stats {
+      white-space: pre-wrap;     /* Preserve line breaks, wrap long lines */
+      word-wrap: break-word;     /* Break long words */
+      overflow-wrap: break-word; /* Ensures compatibility */
+    }
+
+    .progress-bar-container {
+      margin-bottom: 20px; /* Reduce gap between each bar */
+    }
+
+    .progress-label {
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    .progress {
+      background: #eee;
+      height: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #4caf50;
+      transition: width 0.3s ease;
+    }
+
+    .game-stats, .quiz-container {
+      flex: 1;
+      width: 50%;
+      box-sizing: border-box; /* ensures padding/border don't cause overflow */
+      padding: 10px;
+      border: 1px solid #ccc;
+      white-space: normal;
+      word-wrap: break-word; /* or overflow-wrap: break-word */
+    }
+
+    /* Optional: visual distinction */
+    .game-stats {
+      background-color: #ffffff;
+    }
+
+    .quiz-container {
+      background-color: #f0f0f0;
+    }
+
+    @media (max-width: 768px) {
+      .wrapper {
+        flex-direction: column;
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .quiz-container {
+      width: 50%;
+      max-width: none;
+      border-radius: 10px;
+      padding: 2rem;
+      background: white;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      overflow: auto;
+      box-sizing: border-box;
+    }
+
+    .slide {
+      display: none;
+      animation: fade 0.5s ease-in-out;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .question-title {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
+    button {
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-back {
+      background-color: #ccc;
+    }
+
+    .btn-next {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-submit {
+      background-color: #28a745;
+      color: white;
+      width: 100%;
+    }
+
+    .json-output {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }

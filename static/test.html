@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <title>Life Simulator Game</title>
-  <link rel='stylesheet' type='text/css' href='game.css'>
+  <link rel='stylesheet' type='text/css' href='test_progbar.css'>
 </head>
 <body>
   <div class="wrapper">
     <!-- Game data & story -->
     <div class="game-stats">
-      <h1>Soulbound - Live a Thousand Lives</h1>
+      <h3>Soulbound - Live a Thousand Lives</h3>
       <pre class="json-output" id="gameData">Loading...</pre>
+      <div id="progressBars">
+        <!-- Progress bars will be inserted here -->
+      </div>
     </div>
 
     <!-- Player choices -->
     <div class="quiz-container">
       <form id="promptForm">
-        <label>Enter a topic:</label>
-<!--         <input type="text" name="topic" required> -->
         <button type="submit">Generate Questions</button>
     </form>
     <div id="quizContainer" style="margin-top: 20px;"></div>
@@ -26,8 +27,6 @@
   </div>
 
 <script>
-// Parse player data code starts here
-const params = new URLSearchParams(window.location.search);
 const rawData = {
   "personality": {
     "alignment": "good",
@@ -57,7 +56,7 @@ let parsed = null; // Declare parsed globally so it's accessible later
 if (rawData) {
 //   try {
     parsed = rawData; //     parsed = JSON.parse(decodeURIComponent(rawData)); // This is the original code. Disabled for testing.
-    document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
+    document.getElementById("gameData").textContent = JSON.stringify(parsed.start, null, 2);
 //   } catch (err) {
 //     document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
 //   }
@@ -167,6 +166,62 @@ document.getElementById("promptForm").addEventListener("submit", async (e) => {
         resultDiv.innerHTML = resultHTML;
     });
 });
+
+// Progress bar script START
+
+// Initial stat values (0–10 scale)
+    const stats = {
+      bravery: 7,
+      curiosity: 3,
+      empathy: 8,
+      logic: 6
+    };
+
+    // Render gameData and progress bars
+    function renderGameData() {
+      document.getElementById("gameData").textContent = JSON.stringify(stats, null, 2);
+    }
+
+    function renderProgressBars() {
+      const container = document.getElementById("progressBars");
+      container.innerHTML = ''; // Clear existing bars
+      for (const key in stats) {
+        const percent = Math.min(100, Math.max(0, stats[key] * 10)); // 0–100%
+        container.innerHTML += `
+          <div class="progress-bar-container">
+            <div class="progress-label" id="label-${key}">${key.charAt(0).toUpperCase() + key.slice(1)} (${stats[key]}/10)</div>
+            <div class="progress">
+              <div class="progress-fill" id="bar-${key}" style="width: ${percent}%;"></div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Update bars after change
+    function updateProgressBars() {
+      for (const key in stats) {
+        const percent = Math.min(100, Math.max(0, stats[key] * 10));
+
+        const bar = document.getElementById(`bar-${key}`);
+        if (bar) {
+          bar.style.width = `${percent}%`;
+        }
+
+        const label = document.getElementById(`label-${key}`);
+        if (label) {
+          label.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)} (${stats[key]}/10)`;
+        }
+      }
+  }
+
+// Wait for DOM to load before rendering
+window.addEventListener("DOMContentLoaded", () => {
+  renderProgressBars();
+  updateProgressBars(); // Optional: to refresh label & gameData JSON
+});
+
+// Progress bar script END
 </script>
 
 </body>
