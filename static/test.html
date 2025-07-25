@@ -162,7 +162,7 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
     const situation   = parsed?.start?.situation || "unknown";
     const timePeriod  = parsed?.start?.time_period || "unknown";
 
-    const topic = `Generate game-like moral dilemma questions for someone with a ${archetype} archetype. The background of the character is as follows- location is ${location}, the player assumes the role of ${role}, situation is- ${situation}, timePeriod is ${timePeriod}.`;
+    const topic = `Moral dilemma questions for someone with a ${archetype} archetype. The background of the character is as follows- location is ${location}, the player assumes the role of ${role}, situation is- ${situation}, timePeriod is ${timePeriod}.`;
 
     formData.set("topic", topic);
 
@@ -203,8 +203,8 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
     currentQuestions.forEach((q, i) => {
         const optionsHTML = q.options.map((opt, j) => `
             <label>
-                <input type="radio" name="choice" value="TEST" required>
-                ${opt}
+                <input type="radio" name="choice" value="${JSON.stringify(opt.value)}" required>
+                ${JSON.stringify(opt.label)}
             </label><br>`).join("");
     
         const slideDiv = document.createElement("div");
