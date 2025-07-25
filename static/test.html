@@ -1,16 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Life Simulator Game</title>
-  <link rel='stylesheet' type='text/css' href='test_progbar.css'>
+  <title>Soulbound - Live a Thousand Lives</title>
+  <style>
+    .wrapper {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      padding: 20px;
+      font-family: sans-serif;
+    }
+    .game-stats, .quiz-container {
+      flex: 1;
+    }
+    .progress-bar-container {
+      margin-bottom: 10px;
+    }
+    .progress-label {
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    .progress {
+      background: #eee;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #4caf50;
+      transition: width 0.3s ease;
+    }
+
+    /* Slide animation START */
+        .slide {
+      display: none;
+      animation: fade 0.5s ease-in-out;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .question-title {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin: 0.5rem 0;
+      cursor: pointer;
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
+    button {
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-back {
+      background-color: #ccc;
+    }
+
+    .btn-next {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-submit {
+      background-color: #28a745;
+      color: white;
+      width: 100%;
+    }
+
+    .json-output {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    /* Slide animation END */
+  </style>
 </head>
 <body>
   <div class="wrapper">
     <!-- Game data & story -->
     <div class="game-stats">
-      <h3>Soulbound - Live a Thousand Lives</h3>
+      <h1>Soulbound - Live a Thousand Lives</h1>
       <pre class="json-output" id="gameData">Loading...</pre>
+
       <div id="progressBars">
         <!-- Progress bars will be inserted here -->
       </div>
@@ -19,157 +112,61 @@
     <!-- Player choices -->
     <div class="quiz-container">
       <form id="promptForm">
-        <button type="submit">Generate Questions</button>
-    </form>
-    <div id="quizContainer" style="margin-top: 20px;"></div>
-    <div id="resultContainer" style="margin-top: 20px;"></div>
+        <div class="slide">
+            <div class="question-title">What do you do when your village faces a drought?</div>
+            <label><input type="radio" name="choice" value="bravery:1"> Lead a water-seeking expedition (+Bravery)</label><br>
+            <label><input type="radio" name="choice" value="empathy:1"> Ration fairly among the sick and elderly (+Empathy)</label><br>
+            <label><input type="radio" name="choice" value="logic:1"> Design an irrigation system (+Logic)</label><br>
+            <label><input type="radio" name="choice" value="curiosity:1"> Research forgotten water rituals (+Curiosity)</label><br>
+            <label><input type="radio" name="choice" value="bravery:-1"> Abandon your post in fear (-Bravery)</label><br>
+        </div>
+
+    <!-- Question 2 -->
+    <div class="slide">
+      <div class="question-title">2. Choose a season:</div>
+      <label><input type="radio" name="q2" value="Spring" required> Spring</label>
+      <label><input type="radio" name="q2" value="Summer"> Summer</label>
+      <label><input type="radio" name="q2" value="Winter"> Winter</label>
+    </div>
+
+    <!-- Question 3 -->
+    <div class="slide">
+      <div class="question-title">3. Pick a pet:</div>
+      <label><input type="radio" name="q3" value="Dog" required> Dog</label>
+      <label><input type="radio" name="q3" value="Cat"> Cat</label>
+      <label><input type="radio" name="q3" value="Bird"> Bird</label>
+    </div>
+
+    <!-- Question 4 -->
+    <div class="slide">
+      <div class="question-title">4. Favorite time of day?</div>
+      <label><input type="radio" name="q4" value="Morning" required> Morning</label>
+      <label><input type="radio" name="q4" value="Afternoon"> Afternoon</label>
+      <label><input type="radio" name="q4" value="Night"> Night</label>
+    </div>
+
+    <!-- Question 5 (4 choices) -->
+    <div class="slide">
+      <div class="question-title">5. Choose a superpower:</div>
+      <label><input type="radio" name="q5" value="Invisibility" required> Invisibility</label>
+      <label><input type="radio" name="q5" value="Flight"> Flight</label>
+      <label><input type="radio" name="q5" value="Time Travel"> Time Travel</label>
+      <label><input type="radio" name="q5" value="Super Strength"> Super Strength</label>
+    </div>
+
+    <div class="navigation">
+      <button type="button" class="btn-back" onclick="prevSlide()">Back</button>
+      <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
+    </div>
+    <button type="submit" class="btn-submit" style="display: none;">Submit</button>
+      </form>
+      <div id="quizContainer" style="margin-top: 20px;"></div>
+      <div id="resultContainer" style="margin-top: 20px;"></div>
     </div>
   </div>
 
-<script>
-const rawData = {
-  "personality": {
-    "alignment": "good",
-    "archetype": "Guardian",
-    "bravery": 7,
-    "curiosity": 3,
-    "empathy": 8,
-    "logic": 6,
-    "primary": "empathy",
-    "secondary": "bravery",
-    "stats": {
-      "bravery": 7,
-      "curiosity": 3,
-      "empathy": 8,
-      "logic": 6
-    }
-  },
-  "start": {
-    "location": "Khmer Empire, Cambodia",
-    "role": "Governor's Advisor",
-    "situation": "As a guardian with a deep empathy for the people, you have been appointed as a governor's advisor, overseeing the welfare of the kingdom's citizens. However, your bravery and the well-being of your subjects are tested when a drought threatens the survival of the empire, questioning the traditional ways and pushing you to seek unconventional solutions.",
-    "time_period": "10th Century CE"
-  }
-};
-let parsed = null; // Declare parsed globally so it's accessible later
-
-if (rawData) {
-//   try {
-    parsed = rawData; //     parsed = JSON.parse(decodeURIComponent(rawData)); // This is the original code. Disabled for testing.
-    document.getElementById("gameData").textContent = JSON.stringify(parsed.start, null, 2);
-//   } catch (err) {
-//     document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
-//   }
-// } else {
-//   document.getElementById("gameData").textContent = "⚠️ No data received.";
-}
-// Parse player data code ends here
-
-let currentQuestions = [];
-
-document.getElementById("promptForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-
-    // Use parsed data to define the topic
-    const archetype   = parsed?.personality?.archetype || "mysterious";
-    const location    = parsed?.start?.location || "unknown";
-    const role        = parsed?.start?.role || "unknown";
-    const situation   = parsed?.start?.situation || "unknown";
-    const timePeriod  = parsed?.start?.time_period || "unknown";
-
-    const topic = `Generate game-like moral dilemma questions for someone with a ${archetype} archetype. The background of the character is as follows- location is ${location}, the player assumes the role of ${role}, situation is- ${situation}, timePeriod is ${timePeriod}.`;
-
-    console.log(topic);
-
-    // Inject topic into formData so the backend receives it
-    formData.set("topic", topic);
-
-    const quizDiv = document.getElementById("quizContainer");
-    const resultDiv = document.getElementById("resultContainer");
-    resultDiv.innerHTML = "";
-    quizDiv.innerHTML = "<p>Generating questions...</p>";
-
-    const res = await fetch("/generate", {
-        method: "POST",
-        body: formData
-    });
-
-    const resClone = res.clone();
-    let data;
-
-    try {
-        data = await res.json();
-    } catch (err) {
-        const raw = await resClone.text();
-        quizDiv.innerHTML = `<p style="color:red;">Server did not return valid JSON.</p><pre>${raw}</pre>`;
-        return;
-    }
-
-    if (data.error) {
-        quizDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p><pre>${data.details || ''}</pre>`;
-        return;
-    }
-
-    currentQuestions = data.questions;
-    quizDiv.innerHTML = `<form id="quizForm"></form>`;
-    const quizForm = document.getElementById("quizForm");
-
-    currentQuestions.forEach((q, i) => {
-        const optionsHTML = q.options.map((opt, j) => `
-            <label>
-                <input type="radio" name="q${i}" value="${opt}" required>
-                ${opt}
-            </label><br>`).join("");
-
-        quizForm.innerHTML += `
-            <div style="margin-bottom: 20px;">
-                <strong>Q${i + 1}:</strong> ${q.question}<br>
-                ${optionsHTML}
-            </div>
-        `;
-    });
-
-    quizForm.innerHTML += `<button type="submit">Submit Answers</button>`;
-
-    quizForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        let score = 0;
-        const results = [];
-
-        currentQuestions.forEach((q, i) => {
-            const selected = quizForm.querySelector(`input[name="q${i}"]:checked`);
-            const userAnswer = selected ? selected.value : "";
-            const isCorrect = userAnswer === q.answer;
-
-            results.push({
-                question: q.question,
-                correct: q.answer,
-                selected: userAnswer,
-                isCorrect
-            });
-
-            if (isCorrect) score++;
-        });
-
-        let resultHTML = `<h2>Your Score: ${score} / ${currentQuestions.length}</h2>`;
-        results.forEach((r, i) => {
-            resultHTML += `
-                <div style="margin-bottom: 15px;">
-                    <strong>Q${i + 1}:</strong> ${r.question}<br>
-                    Your answer: <span style="color: ${r.isCorrect ? 'green' : 'red'};">${r.selected || '(blank)'}</span><br>
-                    Correct answer: ${r.correct}
-                </div>
-            `;
-        });
-
-        resultDiv.innerHTML = resultHTML;
-    });
-});
-
-// Progress bar script START
-
-// Initial stat values (0–10 scale)
+  <script>
+    // Initial stat values (0–10 scale)
     const stats = {
       bravery: 7,
       curiosity: 3,
@@ -213,16 +210,75 @@ document.getElementById("promptForm").addEventListener("submit", async (e) => {
           label.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)} (${stats[key]}/10)`;
         }
       }
+
+      renderGameData();
+    }
+
+    // Handle quiz submission
+    document.getElementById("promptForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const choice = document.querySelector('input[name="choice"]:checked');
+      if (!choice) {
+        alert("Please select a choice!");
+        return;
+      }
+
+      const [stat, changeStr] = choice.value.split(":");
+      const change = parseInt(changeStr);
+
+      if (stat in stats) {
+        stats[stat] = Math.max(0, Math.min(10, stats[stat] + change)); // Clamp between 0 and 10
+      }
+
+      updateProgressBars();
+    });
+
+    // Initial render
+    renderGameData();
+    renderProgressBars();
+
+
+// Questions slide animation script START
+
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const nextBtn = document.querySelector('.btn-next');
+  const backBtn = document.querySelector('.btn-back');
+  const submitBtn = document.querySelector('.btn-submit');
+
+  function showSlide(index) {
+    slides.forEach((slide, i) => {
+      slide.classList.toggle('active', i === index);
+    });
+
+    backBtn.style.display = index === 0 ? 'none' : 'inline-block';
+    nextBtn.style.display = index === slides.length - 1 ? 'none' : 'inline-block';
+    submitBtn.style.display = index === slides.length - 1 ? 'inline-block' : 'none';
   }
 
-// Wait for DOM to load before rendering
-window.addEventListener("DOMContentLoaded", () => {
-  renderProgressBars();
-  updateProgressBars(); // Optional: to refresh label & gameData JSON
-});
+  function nextSlide() {
+    const currentInputs = slides[currentSlide].querySelectorAll('input[type="radio"]');
+    const oneChecked = Array.from(currentInputs).some(input => input.checked);
+    if (!oneChecked) {
+      alert("Please select an option.");
+      return;
+    }
+    if (currentSlide < slides.length - 1) {
+      currentSlide++;
+      showSlide(currentSlide);
+    }
+  }
 
-// Progress bar script END
-</script>
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      showSlide(currentSlide);
+    }
+  }
 
+  showSlide(currentSlide);
+// Questions slide animation script END
+  </script>
 </body>
 </html>
