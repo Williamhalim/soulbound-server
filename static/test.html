@@ -203,7 +203,7 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
     currentQuestions.forEach((q, i) => {
         const optionsHTML = q.options.map((opt, j) => `
             <label>
-                <input type="radio" name="choice" value="${JSON.stringify(opt.value)}" required>
+                <input type="radio" name="choice" value="${Object.entries(opt.value).map(([k, v]) => `${k}:${v}`).join(',')}" required>
                 ${JSON.stringify(opt.label)}
             </label><br>`).join("");
     
@@ -317,7 +317,6 @@ function updateProgressBars() {
 // Handle quiz submission
 document.getElementById("btn-next").addEventListener("click", function (e)  {
   e.preventDefault();
-
     const choice = document.querySelector('input[name="choice"]:checked');
     if (!choice) {
       alert("Please select a choice!");
@@ -331,6 +330,7 @@ document.getElementById("btn-next").addEventListener("click", function (e)  {
       const change = parseInt(changeStr);
       if (stat in stats) {
         stats[stat] = Math.max(0, Math.min(10, stats[stat] + change)); // Clamp between 0 and 10
+        console.log("The stats are: " + stats[stat]);
       }
     });
 
