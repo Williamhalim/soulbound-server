@@ -112,7 +112,7 @@
     <!-- Player choices -->
 <div class="quiz-container">
   <form id="promptForm">
-    <button type="button" id="generateBtn">Generate Questions</button>
+    <button type="button" id="generateBtn">Generate Questions (press if load error)</button>
   </form>
 
   <!-- Placeholder where generated slides will be inserted -->
@@ -121,7 +121,7 @@
   <div class="navigation">
     <button type="button" class="btn-next" id="btn-next" onclick="nextSlide()">Next</button>
   </div>
-  <button type="submit" class="btn-submit" id="btn-submit" style="display: none;">Submit</button>
+  <button type="submit" class="btn-submit" id="btn-submit" form="quizForm" style="display: none;">Submit</button>
 
   <div id="quizContainer" style="margin-top: 20px;"></div>
   <div id="resultContainer" style="margin-top: 20px;"></div>
@@ -220,8 +220,6 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
     });
     showSlide(currentSlide);
 
-    // document.getElementById("btn-submit").style.display = "block";
-
     quizForm.addEventListener("submit", (e) => {
         e.preventDefault();
         let score = 0;
@@ -242,6 +240,7 @@ document.getElementById("generateBtn").addEventListener("click", async (e) => {
             if (isCorrect) score++;
         });
         document.getElementById("btn-next").style.display = "none";
+        window.location.href = "endgame.html"; // or any other page
     });
 });
 
