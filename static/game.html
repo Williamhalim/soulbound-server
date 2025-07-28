@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Life Simulator Game</title>
-  <link rel='stylesheet' type='text/css' href='game.css'>
+  <title>Soulbound - Live a Thousand Lives</title>
+  <link rel="stylesheet" href="game.css">
 </head>
 <body>
   <div class="wrapper">
@@ -11,140 +11,30 @@
     <div class="game-stats">
       <h1>Soulbound - Live a Thousand Lives</h1>
       <pre class="json-output" id="gameData">Loading...</pre>
+
+      <div id="progressBars">
+        <!-- Progress bars will be inserted here -->
+      </div>
     </div>
 
     <!-- Player choices -->
-    <div class="quiz-container">
-      <form id="promptForm">
-        <label>Enter a topic:</label>
-<!--         <input type="text" name="topic" required> -->
-        <button type="submit">Generate Questions</button>
-        </form>
-        <div id="quizContainer" style="margin-top: 20px;"></div>
-        <div id="resultContainer" style="margin-top: 20px;"></div>
-    </div>
+<div class="quiz-container">
+  <form id="promptForm">
+    <button type="button" id="generateBtn">Generate Questions (press if load error)</button>
+  </form>
+
+  <!-- Placeholder where generated slides will be inserted -->
+  <form id="quizForm" style="display: none;"></form>
+
+  <div class="navigation">
+    <button type="button" class="btn-next" id="btn-next" onclick="nextSlide()">Next</button>
   </div>
+  <button type="submit" class="btn-submit" id="btn-submit" form="quizForm" style="display: none;">Submit</button>
 
-<script>
-// Parse player data code starts here
-const params = new URLSearchParams(window.location.search);
-const rawData = params.get("data");
-let parsed = null; // Declare parsed globally so it's accessible later
+  <div id="quizContainer" style="margin-top: 20px;"></div>
+  <div id="resultContainer" style="margin-top: 20px;"></div>
+</div>
 
-if (rawData) {
-  try {
-    parsed = JSON.parse(decodeURIComponent(rawData));
-    document.getElementById("gameData").textContent = JSON.stringify(parsed, null, 2);
-  } catch (err) {
-    document.getElementById("gameData").textContent = "❌ Failed to parse game data.";
-  }
-} else {
-  document.getElementById("gameData").textContent = "⚠️ No data received.";
-}
-// Parse player data code ends here
-
-let currentQuestions = [];
-
-document.getElementById("promptForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-
-    // Use parsed data to define the topic
-    const archetype   = parsed?.personality?.archetype || "mysterious";
-    const location    = parsed?.start?.location || "unknown";
-    const role        = parsed?.start?.role || "unknown";
-    const situation   = parsed?.start?.situation || "unknown";
-    const timePeriod  = parsed?.start?.time_period || "unknown";
-
-    const topic = `Generate game-like moral dilemma questions for someone with a ${archetype} archetype. The background of the character is as follows- location is ${location}, the player assumes the role of ${role}, situation is- ${situation}, timePeriod is ${timePeriod}.`;
-
-    console.log(topic);
-
-    // Inject topic into formData so the backend receives it
-    formData.set("topic", topic);
-
-    const quizDiv = document.getElementById("quizContainer");
-    const resultDiv = document.getElementById("resultContainer");
-    resultDiv.innerHTML = "";
-    quizDiv.innerHTML = "<p>Generating questions...</p>";
-
-    const res = await fetch("/generate", {
-        method: "POST",
-        body: formData
-    });
-
-    const resClone = res.clone();
-    let data;
-
-    try {
-        data = await res.json();
-    } catch (err) {
-        const raw = await resClone.text();
-        quizDiv.innerHTML = `<p style="color:red;">Server did not return valid JSON.</p><pre>${raw}</pre>`;
-        return;
-    }
-
-    if (data.error) {
-        quizDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p><pre>${data.details || ''}</pre>`;
-        return;
-    }
-
-    currentQuestions = data.questions;
-    quizDiv.innerHTML = `<form id="quizForm"></form>`;
-    const quizForm = document.getElementById("quizForm");
-
-    currentQuestions.forEach((q, i) => {
-        const optionsHTML = q.options.map((opt, j) => `
-            <label>
-                <input type="radio" name="q${i}" value="${opt}" required>
-                ${opt}
-            </label><br>`).join("");
-
-        quizForm.innerHTML += `
-            <div style="margin-bottom: 20px;">
-                <strong>Q${i + 1}:</strong> ${q.question}<br>
-                ${optionsHTML}
-            </div>
-        `;
-    });
-
-    quizForm.innerHTML += `<button type="submit">Submit Answers</button>`;
-
-    quizForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        let score = 0;
-        const results = [];
-
-        currentQuestions.forEach((q, i) => {
-            const selected = quizForm.querySelector(`input[name="q${i}"]:checked`);
-            const userAnswer = selected ? selected.value : "";
-            const isCorrect = userAnswer === q.answer;
-
-            results.push({
-                question: q.question,
-                correct: q.answer,
-                selected: userAnswer,
-                isCorrect
-            });
-
-            if (isCorrect) score++;
-        });
-
-        let resultHTML = `<h2>Your Score: ${score} / ${currentQuestions.length}</h2>`;
-        results.forEach((r, i) => {
-            resultHTML += `
-                <div style="margin-bottom: 15px;">
-                    <strong>Q${i + 1}:</strong> ${r.question}<br>
-                    Your answer: <span style="color: ${r.isCorrect ? 'green' : 'red'};">${r.selected || '(blank)'}</span><br>
-                    Correct answer: ${r.correct}
-                </div>
-            `;
-        });
-
-        resultDiv.innerHTML = resultHTML;
-    });
-});
-</script>
-
+<script src="game.js"></script>
 </body>
 </html>
