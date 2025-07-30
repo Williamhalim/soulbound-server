@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quest Tree v2 - Branching with Values</title>
+  <link rel="stylesheet" href="quest-tree.css">
+</head>
+<body>
+
+<label for="plot-select">Choose a plot:</label>
+<select id="plot-select">
+  <option value="Overcoming the Monster">Overcoming the Monster</option>
+  <option value="Rags to Riches">Rags to Riches etc...</option>
+</select>
+<button onclick="startSelectedPlot()">Start Plot</button>
+
+<hr>
+<p id="quest-narration"></p>
+<div id="choices-container"></div>
+<div id="stats"></div>
+
+<div class="quest-box">
+  <h2 id="quest-title">Quest Title</h2>
+  <p id="quest-context">Quest context goes here.</p>
+  <div class="choices" id="choices-container"></div>
+  <div class="stats" id="stats-display"></div>
+</div>
+
+<script src="quest-tree.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+body {
+  font-family: sans-serif;
+  background: #f0f0f0;
+  padding: 20px;
+}
+.quest-box {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.choice-btn {
+  display: block;
+  margin: 10px 0;
+  padding: 10px 15px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.choice-btn:hover {
+  background: #0056b3;
+}
+.stats {
+  font-size: 14px;
+  color: #444;
+  margin-top: 15px;
+}

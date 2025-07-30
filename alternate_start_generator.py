@@ -12,6 +12,15 @@ load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
+# Declare the variables at the top, to be assigned later during the alternate start generator
+time_period = None
+location = None
+role = None
+situation = None
+
+current_archetype = None
+current_stats = None
+
 # === Main Function ===
 def generate_alternate_start(archetype, stats):
     # 📚 List of archetypes with descriptions (used as reference only, NOT to assign roles)

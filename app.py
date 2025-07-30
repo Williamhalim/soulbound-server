@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, request, jsonify
-from llm_client import generate_questions, get_personality_traits, generate_game_quiz
+from llm_client import generate_questions, get_personality_traits, generate_game_quiz, generate_plot_node
 from alternate_start_generator import generate_alternate_start
 import json
 import re
@@ -99,7 +99,7 @@ def analyze():
         print("❌ Exception during parsing/analyzing:", e)
         return jsonify({"error": "Failed to parse trait response", "details": str(e)})
 
-# 🚪 Generate a "Skyrim alternate start" life scenario for the player based on archetype
+# 🚪 Generate a starting life scenario for the player based on archetype
 @app.route("/start", methods=["POST"])
 def start():
     data = request.get_json()
@@ -168,6 +168,25 @@ def generate():
     # Directly return the Response from generate_game_quiz()
     return generate_game_quiz(topic)
 
+# Serve the quest-tree.html on root route
+@app.route("/")
+def quest_tree():
+    return send_from_directory("static", "quest-tree.html")
+
+@app.route('/generate_node', methods=['POST'])
+def generate_node():
+    data = request.get_json()
+    plot_name = data.get("plot_name")
+    thematic_overview = data.get("thematic_overview")
+    story_summary = data.get("story_summary", "")
+
+    node_raw = generate_plot_node(plot_name, thematic_overview, story_summary)
+    
+    try:
+        node_json = json.loads(node_raw)
+        return jsonify(node_json)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON from LLM", "raw": node_raw}), 500
 
 # 🔁 Run the app in debug mode when executed directly
 if __name__ == "__main__":

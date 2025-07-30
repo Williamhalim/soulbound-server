@@ -23,7 +23,7 @@ def generate_questions():
     prompt = """
     You are a personality quiz AI.
 
-    Generate EXACTLY 3 immersive, game-like questions to assess a player's:
+    Generate EXACTLY 3 immersive questions, either game-like or daily life related to assess a player's:
     - bravery
     - empathy
     - curiosity
@@ -222,3 +222,46 @@ def generate_game_quiz(topic):
             print("==== Response Text ====")
             print(response.text)
         return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500
+
+def generate_plot_node(plot_name, thematic_overview, story_summary):
+    prompt = f"""
+You are a narrative designer for a branching text adventure game.
+
+Your job is to generate **one node** for a player navigating the plot: "{plot_name}".
+The overall thematic arc of the story is: {thematic_overview}.
+The summary of the story so far: {story_summary}.
+
+Return output as a valid JSON object with:
+- title (string)
+- summary (1 sentence string)
+- narration (vivid scene from 1-2 paragraphs of 4-5 sentences)
+- choices (array of 2 choices, each with `text`, `next`, and optionally `stat`)
+
+Each choice should continue the branching. For example:
+"choices": [
+  {{ "text": "Fight. [Bravery]", "next": 2, "stat": "Bravery" }},
+  {{ "text": "Flee. [Logic]", "next": 3, "stat": "Logic" }}
+]
+
+Only return a JSON object. No explanation. No markdown. No code blocks.
+"""
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": [{"role": "user", "content": prompt}]
+    }
+
+    response = requests.post(BASE_URL, headers=headers, json=data)
+
+    if response.status_code == 200:
+        result = response.json()
+        print("RAW NODE:", result["choices"][0]["message"]["content"])
+        return result["choices"][0]["message"]["content"]
+    else:
+        print("❌ Node Gen Error:", response.status_code, response.text)
+        return {"error": "LLM call failed"}
