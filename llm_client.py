@@ -223,13 +223,14 @@ def generate_game_quiz(topic):
             print(response.text)
         return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500
 
-def generate_plot_node(plot_name, thematic_overview, story_summary):
+def generate_plot_node(plot_name, thematic_overview, story_summary, current_context):
     prompt = f"""
 You are a narrative designer for a branching text adventure game.
 
 Your job is to generate **one node** for a player navigating the plot: "{plot_name}".
 The overall thematic arc of the story is: {thematic_overview}.
 The summary of the story so far: {story_summary}.
+The current node's context is: {current_context}.
 
 Return output as a valid JSON object with:
 - title (string)

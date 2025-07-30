@@ -179,8 +179,9 @@ def generate_node():
     plot_name = data.get("plot_name")
     thematic_overview = data.get("thematic_overview")
     story_summary = data.get("story_summary", "")
+    current_context = data.get("current_context", "")
 
-    node_raw = generate_plot_node(plot_name, thematic_overview, story_summary)
+    node_raw = generate_plot_node(plot_name, thematic_overview, story_summary, current_context)
     
     try:
         node_json = json.loads(node_raw)

@@ -257,7 +257,7 @@ async function loadNarration(quest) {
 
   try {
     const storySummary = storyContext.join("\n");
-    const result = await fetchPlotNode(quest.title, thematicOverview, quest.summary); // your function
+    const result = await fetchPlotNode(quest.title, thematicOverview, storySummary, quest.context); // your function
 
     if (result && result.narration) {
       narrationEl.textContent = result.narration;
@@ -273,7 +273,7 @@ async function loadNarration(quest) {
   }
 }
 
-async function fetchPlotNode(plotName, thematicOverview, storySummary) {
+async function fetchPlotNode(plotName, thematicOverview, storySummary, currentContext) {
   const response = await fetch('/generate_node', {
     method: 'POST',
     headers: {
@@ -282,7 +282,8 @@ async function fetchPlotNode(plotName, thematicOverview, storySummary) {
     body: JSON.stringify({
       plot_name: plotName,
       thematic_overview: thematicOverview,
-      story_summary: storySummary
+      story_summary: storySummary,
+      current_context: currentContext
     })
   });
 
