@@ -22,7 +22,7 @@
   <!-- 📤 Submit button to send answers (hidden until questions loaded) -->
   <button id="send" onclick="send()" style="display: none;">Submit Answers</button>
 
-  <!-- 🔍 Output area for personality result and alternate start -->
+  <!-- 🔍 Output area for personality result and start -->
   <h2>Response:</h2>
   <pre id="output">{ waiting for response... }</pre>
 
@@ -62,7 +62,7 @@
     console.log("✅ Final parsed questions:", questions);
   }
 
-    // 🔄 STEP 2: Send answers → get personality → get alternate start
+    // 🔄 STEP 2: Send answers → get personality → get start
     async function send() {
       // 📝 Gather answers from textareas
       const answers = [
@@ -74,6 +74,7 @@
       console.log("📝 Answers:", answers);
       output.textContent = "⏳ Sending answers for analysis...";
 
+      // Send the answers to analyze personality
       try {
         // 📤 POST to /analyze
         const res = await fetch("/analyze", {
@@ -92,10 +93,10 @@
           return;
         }
 
-        // 🎯 Show personality traits and move on to alternate start generation
-        output.textContent = `🧠 Personality:\n${JSON.stringify(personality, null, 2)}\n\n⏳ Generating Alternate Start...`;
+        // 🎯 Show personality traits and move on to start generation
+        output.textContent = `🧠 Personality:\n${JSON.stringify(personality, null, 2)}\n\n⏳ Generating Start...`;
 
-        // 📤 POST to /start with the result
+        // Generate start conditions
         const startRes = await fetch("/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -110,7 +111,7 @@
 
         const startData = await startRes.json();
         lastStartData = startData;  // For passing it to the next page: game page
-        console.log("🚪 Alternate Start:", startData);
+        console.log("🚪 Start:", startData);
 
         if (startData.error) {
           output.textContent += "\n❌ Error generating start: " + startData.error;
@@ -118,7 +119,7 @@
         }
 
         // ✅ Display the final origin story
-        output.textContent += `\n🚪 Alternate Start:\n${JSON.stringify(startData, null, 2)}`;
+        output.textContent += `\n🚪 Start:\n${JSON.stringify(startData, null, 2)}`;
         // ✅ Show reroll and start game button
         document.getElementById("reroll").style.display = "inline-block";
         document.getElementById("startGame").style.display = "inline-block";
@@ -133,7 +134,7 @@
         return;
       }
 
-      output.textContent = "🔁 Rerolling alternate start...";
+      output.textContent = "🔁 Rerolling start...";
 
       try {
         const res = await fetch("/start", {
@@ -155,7 +156,8 @@
           return;
         }
 
-        output.textContent += `\n\n🔁 New Alternate Start:\n${JSON.stringify(startData, null, 2)}`;
+        output.textContent += `\n\n🔁 New Start:\n${JSON.stringify(startData, null, 2)}`;
+        lastStartData = startData;
       } catch (err) {
         output.textContent = "❌ Unexpected reroll error: " + err;
       }
@@ -176,7 +178,7 @@
       const encoded = encodeURIComponent(JSON.stringify(gameData));
 
       // Navigate to game.html with data in query string
-      window.location.href = `static/game.html?data=${encoded}`;
+      window.location.href = `/static/quest-tree.html?data=${encoded}`;
 
     }
   </script>

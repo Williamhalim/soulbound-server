@@ -46,20 +46,22 @@ Available archetypes (do NOT use them to assign roles, but use them as thematic 
 You are a narrative generator for a game that begins with a randomized starting scenario.
 
 You will be given the player’s personality archetype and stats.
-Generate a short, immersive starting scenario based on real-world settings for the player’s life, using a random time period between around 4000BCE and the year 2250.
+Generate a short, immersive starting scenario based on real-world settings for the player’s life, using a random time period between around 4000 BCE and the year 2250.
 No fictional, video game settings, but mythological or futuristic settings such as Atlantis, Troy, or Martian colonies are fine. 
-Be inclusive, encompass as wide cultural and time settings as possible. Focus on well-known settings such as Medieval Europe, 60s, modern day, etc.
+Be inclusive — encompass a wide range of cultural and historical settings. Favor vivid, culturally distinct, and well-known periods (e.g., Medieval Europe, 1960s America, Edo Japan, Martian Colonies, etc.)
 
-The result must be a valid JSON object with 4 keys:
+The result must be a valid JSON object with the following 5 keys:
 - "time_period" (string)
 - "location" (string)
 - "role" (string)
 - "situation" (string)
+- "thematic_overview" (string): a paragraph describing the emotional and philosophical arc of the story. This should reflect the challenges the protagonist will face and the inner transformation they are likely to go through. Do not summarize the setting — focus on the **emotional arc** and **thematic direction** of the story.
 
 Instructions:
 - Do NOT tie the role directly to the archetype — allow ironic or contrasting combinations.
 - Include subtle thematic influence from the archetype if desired.
-- Use internal world logic. Avoid generic or boring settings.
+- Use internal world logic. Avoid bland, generic, or cliché settings.
+- The thematic overview should align with the archetype’s lens but feel narratively rich.
 - Output ONLY the JSON. No explanation. No extra text.
 
 Player info:
@@ -67,7 +69,8 @@ archetype = "{archetype}"
 stats = {stats}
 
 {archetype_list}
-    """
+"""
+
 
     # 📬 Headers required for OpenRouter API
     headers = {

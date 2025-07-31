@@ -156,7 +156,6 @@ def determine_archetype(stats):
         "archetype": archetype,
         "primary": primary,
         "secondary": secondary,
-        "stats": safe_stats
     }
 
 @app.route("/generate", methods=["POST"])

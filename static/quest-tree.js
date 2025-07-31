@@ -1,3 +1,8 @@
+const params = new URLSearchParams(window.location.search);
+const rawData = params.get("data");
+let gameData = null;
+let thematicOverview = "";
+
 // --- Value counters for Bravery, Empathy, Curiosity, Logic
 let playerStats = {
   Bravery: 0,
@@ -10,111 +15,296 @@ let quests = {};
 let currentQuestId = 1;
 let returnToQuestId = null; // Stores quest ID to return after side quest
 let storyContext = [];  // Stores the summary of the story so far
+let numberOfChapters = null;
 // The overall arc of the story
-let thematicOverview = `
-ChatGPT said:
-As the Tokugawa era wanes and foreign influence seeps into the cracks of a once-isolated nation, a retired samurai lives quietly in the remote village of Ashigara. Once a loyal servant of the shogunate, he has renounced violence and taken root among humble villagers who know him only as a quiet, dependable guardian. But peace, like all things, is fleeting. When a corrupt magistrate arrives—empowered by foreign arms dealers and driven by greed—the fragile harmony of the village is shattered. Faced with this encroaching threat, the Guardian is forced to confront the vow he made to leave violence behind.
-
-On one path, he chooses bravery, taking up his blade once more to shield the innocent from tyranny. On another, he turns to logic and strategy, seeking ways to dismantle the magistrate’s plans without bloodshed. Along the way, moments of empathy emerge—opportunities to connect, to heal, and to understand the pain of those around him—while misjudgments may lead to unnecessary loss or regret. With each encounter, the Guardian not only battles outward threats, but also the burden of his past, the weight of lost ideals, and the uncertain promise of the future.
-
-In the final confrontation, he may triumph through sheer determination, through careful intellect, or by inspiring others to rise beside him. Whether he wins by the sword, the mind, or the heart, the story is not merely about defeating a monster—it is about reclaiming purpose in a world that has outgrown the old codes. If he fails, the village may still endure, bearing the scars of what was lost and the wisdom of what was learned. But if he succeeds, he does more than protect a place—he awakens a spirit of resilience that echoes far beyond the mountains of Ashigara.
-`;
-
 let narrationDone = false;  // To wait until the narration is loaded, before loading the choice buttons
+
+// Parse game data from URL
+if (rawData) {
+  try {
+    gameData = JSON.parse(decodeURIComponent(rawData));
+    console.log("✅ Game data parsed:", gameData);
+
+    // If it includes a thematic overview, extract it
+    if (gameData.thematic_overview) {
+      thematicOverview = gameData.thematic_overview;
+      console.log("🎭 Thematic Overview:", thematicOverview);
+    }
+
+    // You can also show it in the UI if you want:
+    // document.getElementById("thematic-overview").textContent = thematicOverview;
+
+  } catch (err) {
+    console.error("❌ Failed to parse game data:", err);
+  }
+} else {
+  console.warn("⚠️ No game data received.");
+}
 
 const plotTemplates = {
   "Overcoming the Monster": {
     1: {
-      title: "First Obstacle",
-      context: "A corrupt magistrate, backed by foreign arms dealers, threatens a peaceful mountain village in late Edo-period Japan. A retired samurai feels the first stirrings of duty once more.",
-      narration: "Narration placeholder.",
+      title: "Start / Intro",
+      context: "Ashigara sleeps under fog and quiet. The Guardian tends the soil, unaware that change is already coming.",
+      narration: "Placeholder.",
       choices: [
-        { text: "Confront it.", next: 2, stat: "Bravery" },
-        { text: "Find another way.", next: 3, stat: "Logic" }
+        { text: "Begin the day with quiet reflection.", next: 2 },
+        { text: "Walk the village, sensing the mood.", next: 2 }
       ]
     },
 
     2: {
-      title: "Fight",
-      context: "The Guardian draws his blade for the first time in years to defend his village from hired mercenaries.",
-      narration: "Narration placeholder.",
+      title: "Call to Action",
+      context: "Rumors spread of a corrupt magistrate heading toward Ashigara with foreign weapons. The Guardian senses that peace is ending.",
+      narration: "Placeholder.",
       choices: [
-        { text: "Press on.", next: 4 }
+        { text: "Investigate quietly.", next: 3 },
+        { text: "Rush to prepare the village.", next: 3 }
       ]
     },
 
     3: {
-      title: "Flight",
-      context: "The Guardian seeks a subtler way to protect the village, avoiding direct confrontation—for now.",
-      narration: "Narration placeholder.",
+      title: "Early Side Quest Trigger",
+      context: "A frantic merchant offers a dubious shortcut to 'fix everything.' It smells like trouble, but… could it work?",
+      narration: "Placeholder.",
       choices: [
-        { text: "Proceed cautiously.", next: 4 }
+        { text: "Believe him and follow the plan.", next: 4 },
+        { text: "Decline or stall for time.", next: 5 }
       ]
     },
 
     4: {
-      title: "Second Obstacle",
-      context: "The magistrate escalates his efforts. Reinforcements arrive—better armed, more ruthless.",
-      narration: "Narration placeholder.",
-      choices: [
-        { text: "Set a trap.", next: 6, stat: "Logic" },
-        { text: "Charge before it strikes.", next: 5, stat: "Bravery" }
-      ]
+      title: "Comedic Ending",
+      context: "The merchant’s plan backfires hilariously. The Guardian ends up in a cart full of cabbages heading the wrong way. Game over… for now.",
+      narration: "Placeholder.",
+      choices: []
     },
 
     5: {
-      title: "Fight Again",
-      context: "The Guardian unleashes a desperate assault on the advancing forces before they reach the village.",
-      narration: "Narration placeholder.",
+      title: "First Obstacle",
+      context: "The magistrate’s scouts begin surveying the village. The Guardian must decide how to respond.",
+      narration: "Placeholder.",
       choices: [
-        { text: "Onward to the Final Obstacle", next: 7 }
+        { text: "Confront them directly.", next: 6, stat: "Bravery" },
+        { text: "Track their movements from afar.", next: 7, stat: "Logic" }
       ]
     },
 
     6: {
-      title: "Outsmart",
-      context: "Using the terrain and his cunning, the Guardian strikes not with strength, but strategy.",
-      narration: "Narration placeholder.",
+      title: "Fight",
+      context: "Steel clashes with steel. The Guardian defeats the scouts, but the village is now exposed.",
+      narration: "Placeholder.",
       choices: [
-        { text: "Onward to the Final Obstacle", next: 7 }
+        { text: "Check on the villagers.", next: 8 }
       ]
     },
 
     7: {
-      title: "Final Obstacle",
-      context: "The magistrate reveals his trump card—a foreign war machine, a symbol of Japan’s changing times.",
-      narration: "Narration placeholder.",
+      title: "Flight",
+      context: "The Guardian avoids contact, collecting intel on the magistrate's plans—but some see his caution as cowardice.",
+      narration: "Placeholder.",
       choices: [
-        { text: "Face them head-on.", next: 8, stat: "Bravery" },
-        { text: "Appeal to their humanity.", next: 9, stat: "Logic" }
+        { text: "Keep your distance.", next: 9 }
       ]
     },
 
     8: {
-      title: "Bravery Ending",
-      context: "The Guardian destroys the enemy and with it, the last remnants of the man he used to be.",
-      narration: "Narration placeholder.",
-      choices: []
+      title: "Side Quest Trigger",
+      context: "A sick child goes missing during the chaos. The villagers plead for the Guardian’s help.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Search immediately.", next: 10 },
+        { text: "Refuse and stay on task.", next: 11 }
+      ]
     },
 
     9: {
-      title: "Logic Ending",
-      context: "Through words, memory, and resolve, the Guardian resolves the conflict without bloodshed.",
-      narration: "Narration placeholder.",
+      title: "Failure",
+      context: "While gathering information, the Guardian is discovered and ambushed, losing valuable time and resources.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Return to the village.", next: 11 }
+      ]
+    },
+
+    10: {
+      title: "Side Quest 1",
+      context: "The Guardian finds the child near the river’s edge and saves them. Trust grows within the village.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Continue your mission.", next: 11 }
+      ]
+    },
+
+    11: {
+      title: "Victory",
+      context: "With either strength or empathy, the Guardian wins the first battle—but the magistrate’s main force is drawing near.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Advance.", next: 12 }
+      ]
+    },
+
+    12: {
+      title: "Random Encounter",
+      context: "A disguised traveler passes through the village. Is he a spy, a friend, or just a poor soul fleeing war?",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Confront him.", next: 13 },
+        { text: "Let him pass.", next: 14 }
+      ]
+    },
+
+    13: {
+      title: "Second Obstacle",
+      context: "The traveler reveals himself as a rebel against the magistrate. He shares a secret: there's a weapons stash nearby.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Use this knowledge for a direct strike.", next: 15, stat: "Bravery" },
+        { text: "Use it to plan sabotage.", next: 16, stat: "Logic" }
+      ]
+    },
+
+    14: {
+      title: "Second Obstacle",
+      context: "Without warning, the magistrate’s forces arrive in full. The Guardian must act fast to respond.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Lead a brave counterattack.", next: 15, stat: "Bravery" },
+        { text: "Use what you’ve learned to outmaneuver them.", next: 16, stat: "Logic" }
+      ]
+    },
+
+    15: {
+      title: "Fight with Willpower",
+      context: "The Guardian leads the villagers in a desperate, courageous stand against overwhelming odds.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Trigger a side quest.", next: 17 }
+      ]
+    },
+
+    16: {
+      title: "Fight with Rationale",
+      context: "Using enemy plans and terrain, the Guardian strikes with precision—crippling the invading force.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Uncover hidden insight.", next: 19 }
+      ]
+    },
+
+    17: {
+      title: "Side Quest Trigger 2",
+      context: "A former enemy soldier surrenders. He begs for protection for his injured sister. Will you help?",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Shelter them.", next: 18 },
+        { text: "Turn them away.", next: 18 }
+      ]
+    },
+
+    18: {
+      title: "Persevered to Victory",
+      context: "Through compassion or battle, the Guardian secures a second win—but the final storm is coming.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Prepare for what's next.", next: 20 }
+      ]
+    },
+
+    19: {
+      title: "Discovered Key Knowledge",
+      context: "The Guardian uncovers a conspiracy—foreign dealers have been supplying both sides. There's a way to collapse the entire operation.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Prepare for the climax.", next: 20 }
+      ]
+    },
+
+    20: {
+      title: "Climax / Rising Tension",
+      context: "The magistrate himself enters Ashigara, flanked by his elite guard and a terrifying war machine. All paths now converge.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Steel yourself.", next: 21 }
+      ]
+    },
+
+    21: {
+      title: "Crisis",
+      context: "The Guardian must now choose how to face the final conflict—with the sword, the mind, or something deeper.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Face him head-on.", next: 22, stat: "Bravery" },
+        { text: "Outwit and disarm him.", next: 23, stat: "Logic" },
+        { text: "Walk away and let history decide.", next: 24 },
+        { text: "Appeal to empathy and shared pain.", next: 25 }
+      ]
+    },
+
+    22: {
+      title: "Victory by Determination",
+      context: "Through raw strength and fierce will, the Guardian brings down the magistrate and his war machine.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Complete the tale.", next: 26 }
+      ]
+    },
+
+    23: {
+      title: "Victory by Mind Power",
+      context: "The Guardian orchestrates a final trap, toppling the magistrate without ever raising his blade.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Complete the tale.", next: 27 }
+      ]
+    },
+
+    24: {
+      title: "Game Over – Neutral Path",
+      context: "The Guardian walks into the forest, choosing exile over war. The village’s fate remains uncertain.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Complete the tale.", next: 28 }
+      ]
+    },
+
+    25: {
+      title: "Victory by Harmony",
+      context: "By reminding even the enemy of their humanity, the Guardian stops the conflict with nothing but words and presence.",
+      narration: "Placeholder.",
+      choices: [
+        { text: "Complete the tale.", next: 29 }
+      ]
+    },
+
+    26: {
+      title: "Ending: Peace through Power",
+      context: "The village survives through strength. The Guardian becomes legend, a silent warrior of old times.",
+      narration: "Placeholder.",
+      choices: []
+    },
+
+    27: {
+      title: "Ending: Peace through Knowledge",
+      context: "The Guardian's strategy brings peace. He retires a teacher, passing on his wisdom to the next generation.",
+      narration: "Placeholder.",
+      choices: []
+    },
+
+    28: {
+      title: "Ending: Quest Failed, but Lessons Learned",
+      context: "The Guardian left the path unfinished—but those who watched him remember what almost was.",
+      narration: "Placeholder.",
+      choices: []
+    },
+
+    29: {
+      title: "Ending: Peace through Collaboration",
+      context: "In the end, not power, nor plans—but empathy saved the village. A new future is born together.",
+      narration: "Placeholder.",
       choices: []
     }
-  }
-};
-
-let sideQuests = {
-  "SQ1": {
-    title: "Lost Relic",
-    context: "The brunette lady knight rescued you and asked if you want to investigate an ancient relic in the forest.",
-    narration: "Narration placeholder.",
-    choices: [
-      { text: "Yes, let's find it! [Curiosity]", next: null, stat: "Curiosity" },
-      { text: "No, too risky.", next: null }
-    ]
   }
 };
 
@@ -124,6 +314,7 @@ function startSelectedPlot() {
   currentQuestId = 1;
   resetStats();
   renderQuest();
+  numberOfChapters = Object.keys(plotTemplates[selected]).length;
 }
 
 async function renderQuest() {
@@ -134,8 +325,8 @@ async function renderQuest() {
   const container = document.getElementById('choices-container');
   container.innerHTML = ""; // Clear choices immediately
 
-  // Special logic for final quest (ID 17) based on player stats
-  if (currentQuestId === 17) {
+  // Special logic for final quest  based on player stats
+  if (currentQuestId === numberOfChapters) {
     handleFinalQuest();
     return;
   }
@@ -146,74 +337,22 @@ async function renderQuest() {
   updateStats();
 }
 
-
-async function renderSideQuest(quest) {
-  const container = document.getElementById("choices-container");
-  document.getElementById("quest-title").textContent = quest.title;
-  document.getElementById("quest-context").textContent = quest.context;
-
-  narrationDone = false;
-  await loadNarration(quest);
-
-  container.innerHTML = "";
-  quest.choices.forEach(choice => {
-    const btn = document.createElement("button");
-    btn.className = "choice-btn";
-    btn.textContent = choice.text;
-    btn.onclick = () => {
-      if (choice.stat) playerStats[choice.stat]++;
-      alert("Side quest complete!");
-      if (returnToQuestId !== null) {
-        currentQuestId = returnToQuestId;
-        returnToQuestId = null;
-        updateStoryContext(quest, choice);
-      }
-    };
-    container.appendChild(btn);
-  });
-  updateStats();
-}
-
 function renderChoices(quest, container) {
   if (!narrationDone) return;
 
   container.innerHTML = "";
 
   quest.choices.forEach((choice, index) => {
-    if (choice.type === "quiz") {
-      const questionEl = document.createElement("div");
-      questionEl.innerHTML = `<strong>${choice.question}</strong>`;
-      container.appendChild(questionEl);
-
-      choice.options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.className = "choice-btn";
-        btn.textContent = opt.text;
-        btn.onclick = () => {
-          if (opt.correct) {
-            alert("Correct! Side quest unlocked.");
-            returnToQuestId = choice.next;
-            renderSideQuest(sideQuests[choice.unlock]);
-          } else {
-            alert("Incorrect. The opportunity is lost.");
-            currentQuestId = choice.next;
-            renderQuest();
-          }
-        };
-        container.appendChild(btn);
-      });
-    } else {
-      const btn = document.createElement("button");
-      btn.className = "choice-btn";
-      btn.textContent = choice.text;
-      btn.onclick = () => {
-        if (choice.stat) playerStats[choice.stat]++;
-        currentQuestId = choice.next;
-        updateStoryContext(quest, choice);
-        renderQuest();
-      };
-      container.appendChild(btn);
-    }
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    btn.textContent = choice.text;
+    btn.onclick = () => {
+      if (choice.stat) playerStats[choice.stat]++;
+      currentQuestId = choice.next;
+      updateStoryContext(quest, choice);
+      renderQuest();
+    };
+    container.appendChild(btn);
   });
 }
 
@@ -293,7 +432,6 @@ async function fetchPlotNode(plotName, thematicOverview, storySummary, currentCo
   }
 
   const data = await response.json();
-  console.log("thematicOverview:", thematicOverview);
   return data;
 }
 
