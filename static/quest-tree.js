@@ -1,13 +1,14 @@
 const params = new URLSearchParams(window.location.search);
 const rawData = params.get("data");
 let gameData = null;
-let thematicOverview = `
+let thematicOverview = ``;
+/*let thematicOverview = `
 In a world teetering on the brink of collapse, a Dreamweaver stands as a silent guardian of memory, vision, and meaning. Set in 14th-century Moorish Andalusia, during the final flickers of Muslim rule, the story follows a court astronomer and mystic who lives within the elegant walls of the Alhambra. Surrounded by the beauty of art, science, and poetry, she is haunted not just by dreams of falling stars and vanishing cities, but by a deeper fear—that centuries of knowledge, wisdom, and culture may vanish with her generation.
 
 As Christian forces close in and internal divisions grow sharper, she receives a vision of an ancient manuscript said to contain the essence of her civilization’s accumulated wisdom. This vision sets her on a perilous journey: not across physical landscapes, but through the hidden corridors of the palace, through courtly politics, and through the cryptic language of dreams. At every turn, she must choose between boldness and subtlety—between open defiance and secret action. While some challenges call for courage, others demand cunning and metaphor, for the world she navigates is one of veiled truths, jealous rivals, and invisible dangers.
 
 The Dreamweaver’s arc is not one of brute strength or grand conquest, but of inner clarity and symbolic resistance. She battles not monsters of flesh, but the erasure of memory, the apathy of power, and the silence that follows cultural collapse. Her ultimate victory—whether through stealth or diplomacy—lies in preserving a spark of knowledge for a future she may never see. In doing so, she fulfills her role not just as a mystic, but as a bridge between worlds: between science and poetry, between fading history and enduring legacy.
-`;
+`;*/
 
 // --- Value counters for Bravery, Empathy, Curiosity, Logic
 let playerStats = {
@@ -31,14 +32,8 @@ if (rawData) {
     gameData = JSON.parse(decodeURIComponent(rawData));
     console.log("✅ Game data parsed:", gameData);
 
-    // If it includes a thematic overview, extract it
-    if (gameData.thematic_overview) {
-      thematicOverview = gameData.thematic_overview;
-      console.log("🎭 Thematic Overview:", thematicOverview);
-    }
-
-    // You can also show it in the UI if you want:
-    // document.getElementById("thematic-overview").textContent = thematicOverview;
+    thematicOverview = gameData.start.thematic_overview;
+    console.log("🎭 Thematic Overview:", thematicOverview);
 
   } catch (err) {
     console.error("❌ Failed to parse game data:", err);
@@ -70,7 +65,7 @@ const mermaidCode = `graph TD
 const plotTemplates = {
   1: {
     title: "Start / Intro",
-    context: "Ashigara sleeps under fog and quiet. The Guardian tends the soil, unaware that change is already coming.",
+    context: "Placeholder.",
     narration: "Placeholder.",
     dialogue: ["Placeholder."],
     choices: [
@@ -82,7 +77,7 @@ const plotTemplates = {
 
   2: {
     title: "Call to Action",
-    context: "Rumors spread of a corrupt magistrate heading toward Ashigara with foreign weapons. The Guardian senses that peace is ending.",
+    context: "Placeholder.",
     narration: "Placeholder.",
     dialogue: ["Placeholder."],
     choices: [
@@ -92,7 +87,7 @@ const plotTemplates = {
   },
   3: {
     title: "Dialogue: Voices of urgency",
-    context: "The townsfolk argue over what to do. Fear mixes with stubbornness as chaos brews.",
+    context: "Placeholder.",
     narration: "Placeholder.",
     dialogue: ["Placeholder."],
     choices: [
@@ -103,7 +98,7 @@ const plotTemplates = {
 
   4: {
     title: "Early Side Quest Trigger?",
-    context: "An elder whispers about a forgotten shrine said to protect Ashigara.",
+    context: "Placeholder.",
     narration: "Placeholder.",
     dialogue: ["Placeholder."],
     choices: [
