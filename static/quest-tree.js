@@ -43,7 +43,8 @@ if (rawData) {
 }
 
 const currentPlotName = "Overcoming the Monster";
-const mermaidCode = `graph TD
+const mermaidCode = `
+graph TD
     A[Start] --> B{Obstacle 1}
     B -->|Bravery| C[Fight]
     B -->|Logic| D[Evade/Outsmart]
@@ -62,52 +63,54 @@ const mermaidCode = `graph TD
     H -->|Quit| K[Give Up]
 `;
 
-const plotTemplates = {
+const plotTemplates = 
+{
   1: {
     title: "Start / Intro",
     context: "Placeholder.",
-    narration: "Placeholder.",
-    dialogue: ["Placeholder."],
+    narration: "Placeholder",
+    dialogue: ["Placeholder"],
     choices: [
-      { text: "Begin the day with quiet reflection.", next: 2 },
-      { text: "Walk the village, sensing the mood.", next: 2 }
+      { text: "Placeholder", next: 2 },
+      { text: "Placeholder", next: 2 }
     ]
-
   },
-
   2: {
     title: "Call to Action",
-    context: "Placeholder.",
-    narration: "Placeholder.",
-    dialogue: ["Placeholder."],
+    context: "Placeholder",
+    narration: "Placeholder",
+    dialogue: ["Placeholder"],
     choices: [
-      { text: "Investigate quietly.", next: 3 },
-      { text: "Rush to prepare the village.", next: 3 }
+      { text: "Placeholder", next: 3 },
+      { text: "Placeholder", next: 3 }
     ]
   },
   3: {
     title: "Dialogue: Voices of urgency",
-    context: "Placeholder.",
-    narration: "Placeholder.",
-    dialogue: ["Placeholder."],
+    context: "Placeholder",
+    narration: "Placeholder",
+    dialogue: ["Placeholder"],
     choices: [
-      { text: "Calm them with reason.", next: 4 },
-      { text: "Ignore their squabble.", next: 4 }
+      { text: "Placeholder", next: 4 },
+      { text: "Placeholder", next: 5 }
     ]
   },
-
-  4: {
-    title: "Early Side Quest Trigger?",
-    context: "Placeholder.",
-    narration: "Placeholder.",
-    dialogue: ["Placeholder."],
-    choices: [
-      { text: "Pursue the shrine story.", next: 5 },
-      { text: "Dismiss it as folklore.", next: 6 }
-    ]
+  // please continue generating 4, 5, 6, etc until the end.
+  11: {
+    title: "Logic Ending",
+    context: "Placeholder",
+    narration: "Placeholder",
+    dialogue: ["Placeholder"],
+    choices: []
+  },  
+  12: {
+    title: "Empathy Ending",
+    context: "Placeholder",
+    narration: "Placeholder",
+    dialogue: ["Placeholder"],
+    choices: []
   }
-  // etc...
-};
+};  
 
 async function startSelectedPlot() {
   const selected = document.getElementById('plot-select').value;
@@ -129,7 +132,10 @@ async function startSelectedPlot() {
     return;
   }
 
-  quests = generatedTree;
+  // to sanitize the LLM response
+  const cleanedPlot = sanitizePlotData(generatedTree, plotTemplates);
+
+  quests = cleanedPlot;
   currentQuestId = 1;
 
   console.log("Generated quests:\n", JSON.stringify(quests, null, 2));
@@ -229,32 +235,51 @@ function printStorySummary(){
   console.log(fullSummary); // Or render it to the UI
 }
 
-async function loadFullQuestTree(plotName, thematicOverview, mermaidCode, plotTemplateFormat) {
-  try {
-    const response = await fetch('/generate_full_plot', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        plot_name: plotName,
-        thematic_overview: thematicOverview,
-        mermaid_code: mermaidCode,
-        plot_template_format: plotTemplateFormat
-      })
-    });
+async function loadFullQuestTree(plotName, thematicOverview, mermaidCode, plotTemplateFormat, maxRetries = 5, delayMs = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch('/generate_full_plot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plot_name: plotName,
+          thematic_overview: thematicOverview,
+          mermaid_code: mermaidCode,
+          plot_template_format: plotTemplateFormat
+        })
+      });
 
-    if (!response.ok) {
-      console.error("Error generating full plot:", await response.text());
-      return null;
+      if (!response.ok) {
+        console.warn(`Attempt ${attempt}: Server responded with status ${response.status}`);
+        continue;
+      }
+
+      let data;
+      try {
+        data = await response.json(); // JSON parsing happens here
+      } catch (jsonErr) {
+        console.warn(`Attempt ${attempt}: Invalid JSON received`);
+        continue;
+      }
+
+      // If it gets here, JSON is valid
+      return data.plot_template;
+
+    } catch (err) {
+      console.warn(`Attempt ${attempt}: Network or fetch error:`, err.message);
     }
 
-    const data = await response.json();
-    return data.plot_template; // Should be a full quest tree object
-  } catch (err) {
-    console.error("Error fetching full plot:", err);
-    return null;
+    // Delay before retrying (except after the last attempt)
+    if (attempt < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    } else {
+      console.error("❌ Max retries reached. Failed to load valid JSON.");
+    }
   }
+
+  return null; // If all retries failed
 }
 
 async function loadNarration(quest) {
@@ -320,4 +345,42 @@ function resetStats() {
     Curiosity: 0,
     Logic: 0
   };
+}
+
+function sanitizePlotData(rawPlotData, template) {
+  const sanitizedPlot = {};
+
+  for (const key in template) {
+    const templateEntry = template[key];
+    const rawEntry = rawPlotData[key] || {};
+
+    // Log missing or malformed entries
+    if (!rawPlotData[key]) {
+      console.warn(`⚠️ Missing plot node ${key}, using template fallback.`);
+    }
+
+    if (!Array.isArray(rawEntry.dialogue)) {
+      console.warn(`⚠️ Dialogue for node ${key} is not an array, falling back to template.`);
+    }
+
+    if (!Array.isArray(rawEntry.choices)) {
+      console.warn(`⚠️ Choices for node ${key} are not an array, falling back to template.`);
+    }
+
+    sanitizedPlot[key] = {
+      title: rawEntry.title || templateEntry.title,
+      context: rawEntry.context || templateEntry.context,
+      narration: rawEntry.narration || templateEntry.narration,
+      dialogue: Array.isArray(rawEntry.dialogue) ? rawEntry.dialogue : templateEntry.dialogue,
+      choices: Array.isArray(rawEntry.choices)
+        ? rawEntry.choices.map(choice => ({
+            text: choice.text || "Choose.",
+            next: typeof choice.next === "number" ? choice.next : null
+          }))
+        : templateEntry.choices
+    };
+  }
+
+  console.log("🧹 Sanitized plot structure:", sanitizedPlot);
+  return sanitizedPlot;
 }
