@@ -223,6 +223,43 @@ def generate_game_quiz(topic):
             print(response.text)
         return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500
 
+def call_openrouter_for_plot_tree(prompt):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": [
+            {"role": "system", "content": "You are an expert game narrative generator."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 2000
+    }
+
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+
+    if response.status_code != 200:
+        print("❌ OpenRouter error:", response.text)
+        raise Exception("Failed to call OpenRouter")
+
+    content = response.json()["choices"][0]["message"]["content"]
+    print("🧠 Raw LLM output:\n", content)
+
+    # Try to extract the first JSON-like block
+    match = re.search(r'\{[\s\S]*\}', content)
+    if not match:
+        print("⚠️ Could not find JSON block in LLM output:\n", content)
+        raise Exception("Invalid LLM output: no JSON found")
+
+    try:
+        return json.loads(match.group())
+    except json.JSONDecodeError as e:
+        print("⚠️ JSON decoding failed:", e)
+        print("⚠️ Extracted content:\n", match.group())
+        raise
+
 def generate_plot_node(plot_name, thematic_overview, story_summary, current_context):
     prompt = f"""
 You are a narrative designer for a branching text adventure game.

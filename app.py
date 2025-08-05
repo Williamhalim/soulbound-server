@@ -1,8 +1,9 @@
 from flask import Flask, send_from_directory, request, jsonify
-from llm_client import generate_questions, get_personality_traits, generate_game_quiz, generate_plot_node
+from llm_client import generate_questions, get_personality_traits, generate_game_quiz, generate_plot_node, call_openrouter_for_plot_tree
 from alternate_start_generator import generate_alternate_start
 import json
 import re
+import traceback
 
 # Initialize Flask app and set static folder for HTML/CSS/JS files
 app = Flask(__name__, static_folder="static")
@@ -171,6 +172,80 @@ def generate():
 @app.route("/")
 def quest_tree():
     return send_from_directory("static", "quest-tree.html")
+
+@app.route('/generate_full_plot', methods=['POST'])
+def generate_full_plot():
+    req = request.get_json()
+    plot_name = req.get('plot_name')
+    mermaid_code = req.get('mermaid_code')
+    plot_template_format = req.get('plot_template_format')
+    character_profile = req.get('character_profile', "")  # Optional
+    thematic_overview = req.get('thematic_overview')
+
+    prompt = f"""You are a narrative game design assistant.
+
+Your task is to generate a valid JSON object that implements a quest structure using this template:
+{plot_template_format}
+
+Base it on this plot name:
+{plot_name}
+
+Here is the quest tree in Mermaid syntax:
+{mermaid_code}
+
+The character background is:
+{character_profile}
+
+Thematic overview:
+{thematic_overview}
+
+⚠️ STRICT INSTRUCTIONS:
+- Return only a single valid JSON object that can be directly parsed with JSON.parse()
+- Do not add any comments, explanations, or markdown code blocks
+- Do not wrap the response in quotation marks or introduce the object with text like "Here is the JSON:"
+- Only output: {{ ... }}
+- ✅ IMPORTANT: Make sure the final JSON object is fully enclosed in curly braces with no trailing commas and valid syntax.
+- Start with the number 1 and not 0.
+
+Begin:
+"""
+
+    raw = call_openrouter_for_plot_tree(prompt)
+
+    # Log raw output for debugging
+    print("Raw LLM response:\n", raw)
+
+    try:
+        # Only sanitize if raw is a string
+        if isinstance(raw, str):
+            raw = raw.strip().lstrip("```json").rstrip("```").strip()
+        
+            # Detect HTML error or broken responses
+            if raw.startswith("<!doctype html>") or "<html" in raw.lower():
+                raise ValueError("HTML received instead of JSON. LLM likely failed to follow format.")
+
+            parsed = json.loads(raw)
+        else:
+            # Assume it's already parsed
+            parsed = raw
+
+        return jsonify({"plot_template": parsed})
+
+    except json.JSONDecodeError as je:
+        error_details = {
+            "error": "Failed to parse JSON from LLM response",
+            "details": str(je),
+            "raw_response": raw
+        }
+        return jsonify(error_details), 500
+
+    except Exception as e:
+        return jsonify({
+            "error": "Failed to return plot template",
+            "details": str(e),
+            "traceback": traceback.format_exc(),
+            "raw_response": raw
+        }), 500
 
 @app.route('/generate_node', methods=['POST'])
 def generate_node():
