@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, request, jsonify
-from llm_client import generate_questions, get_personality_traits, generate_plot_node, call_openrouter_for_plot_tree
+from llm_client import generate_questions, get_personality_traits, generate_plot_node, generate_arc_tree
 from alternate_start_generator import generate_alternate_start
 import json
 import re
@@ -39,28 +39,6 @@ def parse_questions(raw):
             raise ValueError("Incomplete or malformed questions")
     else:
         raise ValueError("Not a list")
-
-def parse_game_quiz(raw):
-    html_output = ""
-
-    for i, question_data in enumerate(raw, start=1):
-        question_text = question_data["question"]
-        options = question_data["options"]
-
-        # First slide gets the "active" class
-        slide_class = "slide active" if i == 1 else "slide"
-
-        html_output += f'<div class="{slide_class}">\n'
-        html_output += f'  <div class="question-title">{i}. {question_text}</div>\n'
-
-        for j, option in enumerate(options):
-            # Only the first option has `required`
-            required_attr = ' required' if j == 0 else ''
-            html_output += f'  <label><input type="radio" name="q{i}" value="{option}"{required_attr}> {option}</label>\n'
-
-        html_output += '</div>\n\n'
-
-    return html_output
 
 # 🎯 Route to generate and return 3 personality test questions
 @app.route("/questions")
@@ -159,94 +137,6 @@ def determine_archetype(stats):
         "secondary": secondary,
     }
 
-@app.route("/generate", methods=["POST"])
-def generate():
-    topic = request.form.get("topic")
-    if not topic:
-        return jsonify({"error": "No topic provided"}), 400
-
-    # Directly return the Response from generate_game_quiz()
-    return generate_game_quiz(topic)
-
-# Serve the quest-tree.html on root route
-@app.route("/")
-def quest_tree():
-    return send_from_directory("static", "quest-tree.html")
-
-@app.route('/generate_full_plot', methods=['POST'])
-def generate_full_plot():
-    req = request.get_json()
-    plot_name = req.get('plot_name')
-    mermaid_code = req.get('mermaid_code')
-    plot_template_format = req.get('plot_template_format')
-    character_profile = req.get('character_profile', "")  # Optional
-    thematic_overview = req.get('thematic_overview')
-
-    prompt = f"""You are a narrative game design assistant.
-
-Your task is to generate a valid JSON object that implements a quest structure using this template:
-{plot_template_format}
-
-Base it on this plot name:
-{plot_name}
-
-Here is the quest tree in Mermaid syntax:
-{mermaid_code}
-
-The character background is:
-{character_profile}
-
-Thematic overview:
-{thematic_overview}
-
-⚠️ STRICT INSTRUCTIONS:
-- Return only a single valid JSON object that can be directly parsed with JSON.parse()
-- Do not add any comments, explanations, or markdown code blocks
-- Do not wrap the response in quotation marks or introduce the object with text like "Here is the JSON:"
-- Only output: {{ ... }}
-- ✅ IMPORTANT: Make sure the final JSON object is fully enclosed in curly braces with no trailing commas and valid syntax.
-- Start with the number 1 and not 0.
-
-Begin:
-"""
-
-    raw = call_openrouter_for_plot_tree(prompt)
-
-    # Log raw output for debugging
-    print("Raw LLM response:\n", raw)
-
-    try:
-        # Only sanitize if raw is a string
-        if isinstance(raw, str):
-            raw = raw.strip().lstrip("```json").rstrip("```").strip()
-        
-            # Detect HTML error or broken responses
-            if raw.startswith("<!doctype html>") or "<html" in raw.lower():
-                raise ValueError("HTML received instead of JSON. LLM likely failed to follow format.")
-
-            parsed = json.loads(raw)
-        else:
-            # Assume it's already parsed
-            parsed = raw
-
-        return jsonify({"plot_template": parsed})
-
-    except json.JSONDecodeError as je:
-        error_details = {
-            "error": "Failed to parse JSON from LLM response",
-            "details": str(je),
-            "raw_response": raw
-        }
-        return jsonify(error_details), 500
-
-    except Exception as e:
-        return jsonify({
-            "error": "Failed to return plot template",
-            "details": str(e),
-            "traceback": traceback.format_exc(),
-            "raw_response": raw
-        }), 500
-
 @app.route('/generate_node', methods=['POST'])
 def generate_node():
     data = request.get_json()
@@ -262,6 +152,31 @@ def generate_node():
         return jsonify(node_json)
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON from LLM", "raw": node_raw}), 500
+
+@app.route('/generate_arc', methods=['POST'])
+def generate_arc():
+    data = request.get_json()
+    arc_number = data.get("arc_number")
+    character_profile = data.get("character_profile")
+    story_theme = data.get("story_theme")
+    arc_theme = data.get("arc_theme")
+    story_summary = data.get("story_summary")
+    arc_mermaid = data.get("arc_mermaid")
+
+    raw_response = generate_arc_tree(
+        arc_number,
+        character_profile,
+        story_theme,
+        arc_theme,
+        story_summary,
+        arc_mermaid
+    )
+
+    try:
+        arc_tree = json.loads(raw_response)
+        return jsonify(arc_tree)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON from LLM", "raw": raw_response}), 500
 
 # 🔁 Run the app in debug mode when executed directly
 if __name__ == "__main__":

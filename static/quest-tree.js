@@ -1,6 +1,3 @@
-const params = new URLSearchParams(window.location.search);
-const rawData = params.get("data");
-let gameData = null;
 let thematicOverview = ``;
 /*let thematicOverview = `
 In a world teetering on the brink of collapse, a Dreamweaver stands as a silent guardian of memory, vision, and meaning. Set in 14th-century Moorish Andalusia, during the final flickers of Muslim rule, the story follows a court astronomer and mystic who lives within the elegant walls of the Alhambra. Surrounded by the beauty of art, science, and poetry, she is haunted not just by dreams of falling stars and vanishing cities, but by a deeper fear—that centuries of knowledge, wisdom, and culture may vanish with her generation.
@@ -25,22 +22,6 @@ let storyContext = [];  // Stores the summary of the story so far
 let numberOfChapters = null;
 // The overall arc of the story
 let narrationDone = false;  // To wait until the narration is loaded, before loading the choice buttons
-
-// Parse game data from URL
-if (rawData) {
-  try {
-    gameData = JSON.parse(decodeURIComponent(rawData));
-    console.log("✅ Game data parsed:", gameData);
-
-    thematicOverview = gameData.start.thematic_overview;
-    console.log("🎭 Thematic Overview:", thematicOverview);
-
-  } catch (err) {
-    console.error("❌ Failed to parse game data:", err);
-  }
-} else {
-  console.warn("⚠️ No game data received.");
-}
 
 const currentPlotName = "Overcoming the Monster";
 const mermaidCode = `
@@ -112,37 +93,13 @@ const plotTemplates =
   }
 };  
 
-async function startSelectedPlot() {
+function startSelectedPlot() {
   const selected = document.getElementById('plot-select').value;
-  document.getElementById("loadingMessage").style.display = "block";
-
-  // Call the new generator function
-  const generatedTree = await loadFullQuestTree(
-    selected,
-    thematicOverview,
-    mermaidCode,
-    plotTemplates
-  );
-
-  // Hide loading message
-  document.getElementById("loadingMessage").style.display = "none";
-
-  if (!generatedTree) {
-    alert("Failed to generate quest. Please try again.");
-    return;
-  }
-
-  // to sanitize the LLM response
-  const cleanedPlot = sanitizePlotData(generatedTree, plotTemplates);
-
-  quests = cleanedPlot;
+  quests = JSON.parse(JSON.stringify(plotTemplates)); // Deep copy
   currentQuestId = 1;
-
-  console.log("Generated quests:\n", JSON.stringify(quests, null, 2));
-
   resetStats();
-  numberOfChapters = Object.keys(quests).length;
   renderQuest();
+  numberOfChapters = Object.keys(plotTemplates[selected]).length;
 }
 
 async function renderQuest() {
@@ -235,53 +192,6 @@ function printStorySummary(){
   console.log(fullSummary); // Or render it to the UI
 }
 
-async function loadFullQuestTree(plotName, thematicOverview, mermaidCode, plotTemplateFormat, maxRetries = 5, delayMs = 2000) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch('/generate_full_plot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          plot_name: plotName,
-          thematic_overview: thematicOverview,
-          mermaid_code: mermaidCode,
-          plot_template_format: plotTemplateFormat
-        })
-      });
-
-      if (!response.ok) {
-        console.warn(`Attempt ${attempt}: Server responded with status ${response.status}`);
-        continue;
-      }
-
-      let data;
-      try {
-        data = await response.json(); // JSON parsing happens here
-      } catch (jsonErr) {
-        console.warn(`Attempt ${attempt}: Invalid JSON received`);
-        continue;
-      }
-
-      // If it gets here, JSON is valid
-      return data.plot_template;
-
-    } catch (err) {
-      console.warn(`Attempt ${attempt}: Network or fetch error:`, err.message);
-    }
-
-    // Delay before retrying (except after the last attempt)
-    if (attempt < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    } else {
-      console.error("❌ Max retries reached. Failed to load valid JSON.");
-    }
-  }
-
-  return null; // If all retries failed
-}
-
 async function loadNarration(quest) {
   const narrationEl = document.getElementById("quest-narration");
   narrationEl.textContent = "Loading...";
@@ -345,42 +255,4 @@ function resetStats() {
     Curiosity: 0,
     Logic: 0
   };
-}
-
-function sanitizePlotData(rawPlotData, template) {
-  const sanitizedPlot = {};
-
-  for (const key in template) {
-    const templateEntry = template[key];
-    const rawEntry = rawPlotData[key] || {};
-
-    // Log missing or malformed entries
-    if (!rawPlotData[key]) {
-      console.warn(`⚠️ Missing plot node ${key}, using template fallback.`);
-    }
-
-    if (!Array.isArray(rawEntry.dialogue)) {
-      console.warn(`⚠️ Dialogue for node ${key} is not an array, falling back to template.`);
-    }
-
-    if (!Array.isArray(rawEntry.choices)) {
-      console.warn(`⚠️ Choices for node ${key} are not an array, falling back to template.`);
-    }
-
-    sanitizedPlot[key] = {
-      title: rawEntry.title || templateEntry.title,
-      context: rawEntry.context || templateEntry.context,
-      narration: rawEntry.narration || templateEntry.narration,
-      dialogue: Array.isArray(rawEntry.dialogue) ? rawEntry.dialogue : templateEntry.dialogue,
-      choices: Array.isArray(rawEntry.choices)
-        ? rawEntry.choices.map(choice => ({
-            text: choice.text || "Choose.",
-            next: typeof choice.next === "number" ? choice.next : null
-          }))
-        : templateEntry.choices
-    };
-  }
-
-  console.log("🧹 Sanitized plot structure:", sanitizedPlot);
-  return sanitizedPlot;
 }

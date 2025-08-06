@@ -132,43 +132,6 @@ Answers:
             "error": "LLM call failed"
         }
 
-def call_openrouter_for_plot_tree(prompt):
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": "mistralai/mistral-7b-instruct",
-        "messages": [
-            {"role": "system", "content": "You are an expert game narrative generator."},
-            {"role": "user", "content": prompt}
-        ],
-        "max_tokens": 2000
-    }
-
-    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-
-    if response.status_code != 200:
-        print("❌ OpenRouter error:", response.text)
-        raise Exception("Failed to call OpenRouter")
-
-    content = response.json()["choices"][0]["message"]["content"]
-    print("🧠 Raw LLM output:\n", content)
-
-    # Try to extract the first JSON-like block
-    match = re.search(r'\{[\s\S]*\}', content)
-    if not match:
-        print("⚠️ Could not find JSON block in LLM output:\n", content)
-        raise Exception("Invalid LLM output: no JSON found")
-
-    try:
-        return json.loads(match.group())
-    except json.JSONDecodeError as e:
-        print("⚠️ JSON decoding failed:", e)
-        print("⚠️ Extracted content:\n", match.group())
-        raise
-
 def generate_plot_node(plot_name, thematic_overview, story_summary, current_context):
     prompt = f"""
 You are a narrative designer for a branching text adventure game.
@@ -213,95 +176,42 @@ Only return a JSON object. No explanation. No markdown. No code blocks.
         print("❌ Node Gen Error:", response.status_code, response.text)
         return {"error": "LLM call failed"}
 
+def generate_arc_tree(arc_number, character_profile, story_theme, arc_theme, story_summary, arc_mermaid):
+    prompt = f"""
+You are a story generator AI working on a 4-act branching narrative.
 
+Act {arc_number} of the story follows this Mermaid.js tree structure:
+{arc_mermaid}
 
-# def generate_game_quiz(topic):
-#     topic = request.form.get("topic")
-#     if not topic:
-#         return jsonify({"error": "No topic provided"}), 400
+Use the following context to generate a JSON representation of this arc:
+- Character Profile: {character_profile}
+- Overall Story Theme: {story_theme}
+- This Arc's Thematic Focus: {arc_theme}
+- Story So Far: {story_summary}
 
-#     # JSON format example for the prompt
-#     example = '''
-#     [
-#       {
-#         "question": "What do you do when your village faces a drought?",
-#         "options": [
-#           {
-#             "label": "Dig a well with the villagers",
-#             "name": "dig_well",
-#             "value": { "bravery":1, "curiosity":0, "empathy":2, "logic":-1 }
-#           },
-#           ...
-#         ]
-#       },
-#       ...
-#     ]
-#     '''
+Return only valid JSON for the arc’s nodes. Each node should have:
+- title (string)
+- summary (string)
+- next (id of next node, if applicable)
 
-#     prompt = f"""
-#     You are a system generating moral dilemma questions for a role-playing game. These questions reflect the player's archetype and affect their core stats.
+Follow the structure exactly as per the Mermaid chart.
+Return nothing else. No explanation. No formatting.
+"""
 
-#     Generate exactly 5 multiple-choice questions based on the topic: {topic}.
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
 
-#     Each question must include:
-#     - "question": a string describing the moral dilemma
-#     - "options": an array of exactly 4 answer choices. Each choice must be an object containing:
-#         - "label": a human-readable string (the answer text)
-#         - "name": a machine-friendly identifier (e.g., "help_villager")
-#         - "value": an object with 4 keys: "bravery", "curiosity", "empathy", and "logic". Each key must have an integer between -3 and 3 representing how the choice affects that stat. Do not omit any of the 4 keys.
+    data = {
+        "model": "mistralai/mistral-7b-instruct",
+        "messages": [{"role": "user", "content": prompt}]
+    }
 
-#     The full output must be a JSON array of exactly 5 such question objects. Do NOT include explanations, markdown formatting, or any text before or after the array. Only output raw JSON.
+    response = requests.post(BASE_URL, headers=headers, json=data)
 
-#     Example output format:
-#     {example}
-#     """
-
-#     headers = {
-#         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-#         "HTTP-Referer": "http://localhost:5000",  # For local dev
-#         "X-Title": "MCQ Generator"
-#     }
-
-#     data = {
-#         "model": "mistralai/mistral-7b-instruct",  # or other OpenRouter-supported models
-#         "messages": [{"role": "user", "content": prompt}]
-#     }
-
-#     try:
-#         response = requests.post("https://openrouter.ai/api/v1/chat/completions",
-#                                  headers=headers, json=data)
-#         response.raise_for_status()
-
-#         content = response.json()["choices"][0]["message"]["content"]
-#         print("==== Raw LLM Output ====")
-#         print(content)
-
-#         # Remove markdown formatting if present
-#         content = content.strip().replace("```json", "").replace("```", "")
-
-#         # Attempt to parse as JSON
-#         questions = json.loads(content)
-
-#         # Validate structure
-#         assert isinstance(questions, list) and len(questions) == 5
-#         for q in questions:
-#             assert "question" in q and isinstance(q["question"], str)
-#             assert "options" in q and isinstance(q["options"], list) and len(q["options"]) == 4
-#             for opt in q["options"]:
-#                 assert "label" in opt and isinstance(opt["label"], str)
-#                 assert "name" in opt and isinstance(opt["name"], str)
-#                 assert "value" in opt and isinstance(opt["value"], dict)
-#                 for stat in ["bravery", "curiosity", "empathy", "logic"]:
-#                     assert stat in opt["value"]
-#                     assert isinstance(opt["value"][stat], int)
-#                     assert -3 <= opt["value"][stat] <= 3
-
-#         return jsonify({"questions": questions})
-
-#     except Exception as e:
-#         print("==== Error ====")
-#         print(str(e))
-#         if 'response' in locals():
-#             print("==== Response Text ====")
-#             print(response.text)
-#         return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500
+    if response.status_code == 200:
+        return response.json()["choices"][0]["message"]["content"]
+    else:
+        print("❌ Arc Gen Error:", response.status_code, response.text)
+        return '{"error": "LLM call failed"}'

@@ -2,109 +2,321 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Quest Tree Parser</title>
+  <title>Quest Tree Parser with Multiple Arcs</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    textarea { width: 100%; height: 200px; }
-    #story { margin-top: 20px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; }
+    textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+    #story { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
     .choice-btn { display: block; margin-top: 10px; padding: 10px; font-size: 1em; }
+
+    #statusText {
+      font-family: sans-serif;
+      margin-top: 1em;
+      color: #333;
+    }
+
   </style>
 </head>
 <body>
 
-  <h1>Quest Tree Tester</h1>
-  <textarea id="input" placeholder="Paste human-readable quest format here..."></textarea>
+  <h1>Quest Tree Tester (Multi-Arc)</h1>
+
+  <div id="statusText">Ready.</div>
+  
   <button onclick="start()">Parse & Start</button>
 
   <div id="story"></div>
 
-  <script>
-    let questTree = {};
-    let currentQuestId = null;
+<script>
+  let questTree = {};
+  let currentQuestId = null;
 
-    function parseHumanReadable(text) {
-      const lines = text.split('\n');
-      const tree = {};
-      let currentNodeId = null;
-      let currentNode = null;
+// ----- Temporary hard-coded dynamic contents ----- \\
+  const characterProfile = `
+  Character profile: Archetype: Mediator
+  Time Period: Feudal Japan
+  Location: A border town between warring provinces
+  Role: Temple Scribe and Peace Envoy for a neutral monastery
+  Situation: Caught between two rival daimyōs, your town stands on the edge of destruction. As the only representative of a neutral monastic order respected by both sides, you’ve been called upon to broker a temporary truce. But past bloodshed, lingering hatred, and the ambitions of warlords threaten to unravel any hope of peace. With nothing but your words, wisdom, and insight into human nature, you must navigate shifting loyalties, veiled threats, and deep-rooted trauma to prevent a massacre.
 
-      for (let line of lines) {
-        line = line.trim();
+  `;
+  const thematicOverview = `
+The Mediator’s story is a quiet epic set against the thunder of war—a tale not of swords drawn, but of words spoken in defiance of chaos. As the only neutral voice in a land divided by ambition and vengeance, the protagonist walks a perilous path where one misstep can lead to ruin. Their journey through doubt, danger, and diplomacy highlights the fragile nature of peace and the immense strength required to pursue it. Each choice they make—whether driven by courage, reason, or empathy—builds toward a resolution that reflects the heart of who they’ve become.
+Thematically, the story is a meditation on the power of restraint in a world that glorifies force. It asks whether understanding can endure in a culture shaped by conquest, and whether compassion can mend what violence has torn. The Mediator’s path doesn’t seek to erase conflict, but to hold space for healing in its midst—revealing that sometimes, the most radical form of resistance is simply refusing to become what the world expects. In the end, peace is not a prize won, but a truth lived.
+  `;
 
-        if (line.startsWith("Node:")) {
-          if (currentNodeId !== null) {
-            tree[currentNodeId] = currentNode;
-          }
-          currentNodeId = line.slice(5).trim();
-          currentNode = {
-            title: "",
-            context: "",
-            choices: {}
-          };
-        } else if (line.startsWith("Title:")) {
-          currentNode.title = line.slice(6).trim();
-        } else if (line.startsWith("Context:")) {
-          currentNode.context = line.slice(8).trim();
-        } else if (line.startsWith("Choice")) {
-          const parts = line.split("->");
-          if (parts.length === 2) {
-            const choiceText = parts[0].split(":")[1].trim();
-            const nextId = parts[1].replace("Node", "").trim();
-            currentNode.choices[choiceText] = nextId;
-          }
+  const arcMermaids = {
+    1: `
+      graph TD
+        1[Start] --> 2[Dialogue: A quiet life before the call]
+        2 --> 3[Call to Action]
+
+        3 --> 4[Dialogue: Voices of urgency]
+        4 --> 5{Early Side Quest Trigger?}
+
+        5 -->|Wrong / Rash Choice| 6[Comedic Ending / Game Over]
+        5 -->|Thoughtful or Ignored| 7[Dialogue: Echoes of hesitation] --> 8{First Obstacle}
+    `,
+    2: `
+      graph TD
+        8[First Obstacle] -->|Bravery path| 9[Dialogue: Instincts awakened] --> 10[Confrontation]
+        8 -->|Logic path| 11[Dialogue: Seeking alternatives] --> 12[Avoidance or Escape]
+
+        10 --> 13{Side Quest Trigger}
+        13 -->|Right action| 14[Dialogue: A passing stranger] --> 15[Side Quest 1]
+        15 --> 16[Empathy gained] --> 17[Overcomes the challenge]
+        13 -->|Wrong or Ignore| 17
+
+        12 --> 18[Dialogue: Lessons in hindsight] --> 19[Temporary setback]
+
+        17 --> 20[🎲 x% Random Encounter] --> 21[Dialogue: Crossroads ahead] --> 22{Second Obstacle}
+        19 --> 23[Dialogue: Picking up the pieces] --> 22
+    `,
+    3: `
+      graph TD
+        22[Second Obstacle] -->|Bravery path| 24[Dialogue: Fire within] --> 25[Driven by Willpower]
+        22 -->|Logic path| 26[Dialogue: Understanding the threat] --> 27[Calculated Strategy]
+
+        25 --> 28{Side Quest Trigger}
+        28 -->|Right action| 29[Dialogue: A past connection] --> 30[Side Quest 2]
+        30 --> 31[Empathy gained] --> 32[Victory through perseverance]
+        28 -->|Wrong or Ignore| 32
+
+        27 --> 33[Dialogue: The unsettling truth] --> 34[Critical discovery]
+
+        32 --> 35[🎲 x% Chance of Failure] -->|Fail| 36[Moment of doubt] --> 32
+        34 --> 37[🎲 x% Chance of Failure] -->|Fail| 38[Moment of doubt] --> 34
+
+        32 --> 39[Dialogue: Can you carry on?] --> 40[Climax / Rising Tension]
+        34 --> 41[Dialogue: The missing piece] --> 40
+    `,
+    4: `
+      graph TD
+        40[Climax / Crisis] --> 42[Dialogue: Reckoning approaches] --> 43{Final Obstacle}
+
+        43 -->|Bravery path| 44[Dialogue: No more running] --> 45[Resolution by courage]
+        43 -->|Logic path| 46[Dialogue: Outsmart the danger] --> 47[Resolution by wit]
+        43 -->|Neutral path| 48[Dialogue: The world turns without you] --> 49[Quest left behind]
+        43 -->|Empathy path| 50[Dialogue: A heart-to-heart] --> 51[Resolution by compassion]
+
+        45 --> 52[Ending: Strength forged peace]
+        47 --> 53[Ending: Wisdom forged peace]
+        49 --> 54[Ending: Journey unfinished]
+        51 --> 55[Ending: Unity forged peace]
+    `,
+  };
+
+  const arcThemes = {
+    1: `This arc explores the awakening of duty in a world teetering on the edge of violence. The Mediator, once content in quiet service, is reluctantly pulled toward a greater purpose as tension builds around them. Early decisions test whether they act with thoughtfulness or fall prey to haste—revealing that true peace begins not with action, but with understanding the weight of what’s at stake.`,
+    2: `Now in motion, the Mediator faces their first trials—negotiating between instinct and reason as obstacles mount. Whether confronting danger head-on or seeking alternative paths, their actions begin to shape their connection to others. Side quests and encounters here offer a deeper understanding of human suffering, showing that empathy isn’t a philosophy—it’s a responsibility born of listening and compassion.`,
+    3: `This arc delves into the sharpening of wisdom through adversity. Faced with new threats and difficult truths, the Mediator must rely not only on intellect or courage, but the emotional insight gained from previous encounters. As random failures and doubts creep in, the story emphasizes that even the most composed heart can falter—but that growth often comes through these very stumbles.`,
+    4: `In the final arc, the Mediator stands before the ultimate test of resolve and identity. As the world demands a final decision—whether through courage, cleverness, detachment, or compassion—the culmination of their journey reveals what kind of peace they’ve truly been fighting for. Here, the story asks: in a world fractured by war, can one person’s understanding truly forge unity, or is peace always a fragile, fleeting ideal?`,
+  };
+
+  const storySummary = `
+  So far, the protagonist...
+  `;
+
+// ----- end ----- \\  
+
+// ----- Quest traversal ----- \\
+
+  function parseHumanReadable(text) {
+    const lines = text.split('\n');
+    const tree = {};
+    let currentNodeId = null;
+    let currentNode = null;
+
+    for (let line of lines) {
+      line = line.trim();
+
+      if (line.startsWith("Node:")) {
+        if (currentNodeId !== null) {
+          tree[currentNodeId] = currentNode;
+        }
+        currentNodeId = line.slice(5).trim();
+        currentNode = {
+          title: "",
+          context: "",
+          choices: {}
+        };
+      } else if (line.startsWith("Title:")) {
+        currentNode.title = line.slice(6).trim();
+      } else if (line.startsWith("Context:")) {
+        currentNode.context = line.slice(8).trim();
+      } else if (line.startsWith("Choice")) {
+        const parts = line.split("->");
+        if (parts.length === 2) {
+          const choiceText = parts[0].split(":")[1].trim();
+          const nextId = parts[1].replace("Node", "").trim();
+          currentNode.choices[choiceText] = nextId;
         }
       }
+    }
 
-      if (currentNodeId !== null) {
-        tree[currentNodeId] = currentNode;
+    if (currentNodeId !== null) {
+      tree[currentNodeId] = currentNode;
+    }
+
+    return tree;
+  }
+
+  function mergeTreesInOrder(treeList) {
+    const combined = {};
+    for (const tree of treeList) {
+      for (const [id, node] of Object.entries(tree)) {
+        combined[id] = node;  // Later arcs overwrite earlier ones for the same node ID
+      }
+    }
+    return combined;
+  }
+
+  function updateStoryContext(quest, choice) {
+    console.log("Chose:", choice.text, "-> Next Node:", choice.next);
+  }
+
+  function renderQuest() {
+    const container = document.getElementById("story");
+    container.innerHTML = "";
+
+    const quest = questTree[currentQuestId];
+    if (!quest) {
+      container.textContent = "The story ends here.";
+      return;
+    }
+
+    const titleEl = document.createElement("h2");
+    titleEl.textContent = quest.title;
+    container.appendChild(titleEl);
+
+    const contextEl = document.createElement("p");
+    contextEl.textContent = quest.context;
+    container.appendChild(contextEl);
+
+    Object.entries(quest.choices).forEach(([choiceText, nextId]) => {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.textContent = choiceText;
+      btn.onclick = () => {
+        currentQuestId = nextId;
+        updateStoryContext(quest, { text: choiceText, next: nextId });
+        renderQuest();
+      };
+      container.appendChild(btn);
+    });
+  }
+
+// ----- end ----- \\
+
+// ----- LLM processor ----- \\
+
+  async function start() {
+    const statusText = document.getElementById("statusText");
+    arcTrees = []; // reset
+
+    try {
+      for (let arcNumber = 1; arcNumber <= 4; arcNumber++) {
+        const arcTheme = window[`arc${arcNumber}Theme`];
+        const arcMermaid = window[`arc${arcNumber}Mermaid`];
+
+        const stageMessage = `⏳ Generating Act ${arcNumber}...`;
+        console.log(stageMessage);
+        statusText.textContent = stageMessage;
+
+        const response = await fetch(`/generate_arc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            arc_number: arcNumber,
+            character_profile: characterProfile,
+            story_theme: thematicOverview,
+            arc_theme: arcTheme,
+            story_summary: storySummary,
+            arc_mermaid: arcMermaid,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ Failed to generate arc ${arcNumber}:`, errorText);
+          statusText.textContent = `❌ Failed at Act ${arcNumber}`;
+          return;
+        }
+
+        const arcTree = await response.json();
+        arcTrees.push(arcTree);
+
+        const successMessage = `✅ Act ${arcNumber} generated successfully.`;
+        console.log(successMessage);
+        statusText.textContent = successMessage;
+
+        // OPTIONAL: Update story summary here based on arcTree
       }
 
-      return tree;
+      statusText.textContent = "🎉 All 4 acts generated!";
+      console.log("✅ All arcs completed successfully.");
+    } catch (error) {
+      console.error("❌ Unexpected error:", error);
+      statusText.textContent = "❌ Unexpected error occurred.";
     }
+  }
 
-    function updateStoryContext(quest, choice) {
-      // You can add logs or game state updates here
-      console.log("Chose:", choice.text, "-> Next Node:", choice.next);
-    }
+  async function fetchArc({ arcNumber, mermaidTree, characterProfile, thematicOverview, arcTheme, storySummary }) {
+    const prompt = `
+  You are a narrative designer for a branching text adventure game.
 
-    function renderQuest() {
-      const container = document.getElementById("story");
-      container.innerHTML = "";
+  Your task is to write **Arc ${arcNumber}** of a larger narrative.
+  The story must follow this exact Mermaid tree structure (do not invent structure):
 
-      const quest = questTree[currentQuestId];
-      if (!quest) {
-        container.textContent = "The story ends here.";
-        return;
-      }
+  ${mermaidTree}
 
-      const titleEl = document.createElement("h2");
-      titleEl.textContent = quest.title;
-      container.appendChild(titleEl);
+  Character profile:
+  ${characterProfile}
 
-      const contextEl = document.createElement("p");
-      contextEl.textContent = quest.context;
-      container.appendChild(contextEl);
+  Thematic overview of the entire story:
+  ${thematicOverview}
 
-      Object.entries(quest.choices).forEach(([choiceText, nextId]) => {
-        const btn = document.createElement("button");
-        btn.className = "choice-btn";
-        btn.textContent = choiceText;
-        btn.onclick = () => {
-          currentQuestId = nextId;
-          updateStoryContext(quest, { text: choiceText, next: nextId });
-          renderQuest();
-        };
-        container.appendChild(btn);
-      });
-    }
+  Thematic overview of this arc:
+  ${arcTheme}
 
-    function start() {
-      const input = document.getElementById("input").value;
-      questTree = parseHumanReadable(input);
-      currentQuestId = Object.keys(questTree)[0]; // Start from first node
-      renderQuest();
-    }
-  </script>
+  Summary of the story so far:
+  ${storySummary}
+
+  Return the arc as a list of nodes in this exact format:
+
+  Node: [node ID]
+  Title: [short title]
+  Context: [a vivid short scene from 1 paragraph]
+  Choice 1: [choice text] -> Node [next ID]
+  Choice 2: [choice text] -> Node [next ID]
+
+  Use appropriate tone, scene description, and character voice.
+
+  Return only the arc content. No explanations, no markdown, no formatting instructions.
+  `;
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer YOUR_API_KEY",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-4",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: prompt }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+  }
+
+// ----- end ----- \\
+
+</script>
 
 </body>
 </html>
