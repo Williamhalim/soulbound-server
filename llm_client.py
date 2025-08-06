@@ -132,97 +132,6 @@ Answers:
             "error": "LLM call failed"
         }
 
-def generate_game_quiz(topic):
-    topic = request.form.get("topic")
-    if not topic:
-        return jsonify({"error": "No topic provided"}), 400
-
-    # JSON format example for the prompt
-    example = '''
-    [
-      {
-        "question": "What do you do when your village faces a drought?",
-        "options": [
-          {
-            "label": "Dig a well with the villagers",
-            "name": "dig_well",
-            "value": { "bravery":1, "curiosity":0, "empathy":2, "logic":-1 }
-          },
-          ...
-        ]
-      },
-      ...
-    ]
-    '''
-
-    prompt = f"""
-    You are a system generating moral dilemma questions for a role-playing game. These questions reflect the player's archetype and affect their core stats.
-
-    Generate exactly 5 multiple-choice questions based on the topic: {topic}.
-
-    Each question must include:
-    - "question": a string describing the moral dilemma
-    - "options": an array of exactly 4 answer choices. Each choice must be an object containing:
-        - "label": a human-readable string (the answer text)
-        - "name": a machine-friendly identifier (e.g., "help_villager")
-        - "value": an object with 4 keys: "bravery", "curiosity", "empathy", and "logic". Each key must have an integer between -3 and 3 representing how the choice affects that stat. Do not omit any of the 4 keys.
-
-    The full output must be a JSON array of exactly 5 such question objects. Do NOT include explanations, markdown formatting, or any text before or after the array. Only output raw JSON.
-
-    Example output format:
-    {example}
-    """
-
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": "http://localhost:5000",  # For local dev
-        "X-Title": "MCQ Generator"
-    }
-
-    data = {
-        "model": "mistralai/mistral-7b-instruct",  # or other OpenRouter-supported models
-        "messages": [{"role": "user", "content": prompt}]
-    }
-
-    try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions",
-                                 headers=headers, json=data)
-        response.raise_for_status()
-
-        content = response.json()["choices"][0]["message"]["content"]
-        print("==== Raw LLM Output ====")
-        print(content)
-
-        # Remove markdown formatting if present
-        content = content.strip().replace("```json", "").replace("```", "")
-
-        # Attempt to parse as JSON
-        questions = json.loads(content)
-
-        # Validate structure
-        assert isinstance(questions, list) and len(questions) == 5
-        for q in questions:
-            assert "question" in q and isinstance(q["question"], str)
-            assert "options" in q and isinstance(q["options"], list) and len(q["options"]) == 4
-            for opt in q["options"]:
-                assert "label" in opt and isinstance(opt["label"], str)
-                assert "name" in opt and isinstance(opt["name"], str)
-                assert "value" in opt and isinstance(opt["value"], dict)
-                for stat in ["bravery", "curiosity", "empathy", "logic"]:
-                    assert stat in opt["value"]
-                    assert isinstance(opt["value"][stat], int)
-                    assert -3 <= opt["value"][stat] <= 3
-
-        return jsonify({"questions": questions})
-
-    except Exception as e:
-        print("==== Error ====")
-        print(str(e))
-        if 'response' in locals():
-            print("==== Response Text ====")
-            print(response.text)
-        return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500
-
 def call_openrouter_for_plot_tree(prompt):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -303,3 +212,96 @@ Only return a JSON object. No explanation. No markdown. No code blocks.
     else:
         print("❌ Node Gen Error:", response.status_code, response.text)
         return {"error": "LLM call failed"}
+
+
+
+# def generate_game_quiz(topic):
+#     topic = request.form.get("topic")
+#     if not topic:
+#         return jsonify({"error": "No topic provided"}), 400
+
+#     # JSON format example for the prompt
+#     example = '''
+#     [
+#       {
+#         "question": "What do you do when your village faces a drought?",
+#         "options": [
+#           {
+#             "label": "Dig a well with the villagers",
+#             "name": "dig_well",
+#             "value": { "bravery":1, "curiosity":0, "empathy":2, "logic":-1 }
+#           },
+#           ...
+#         ]
+#       },
+#       ...
+#     ]
+#     '''
+
+#     prompt = f"""
+#     You are a system generating moral dilemma questions for a role-playing game. These questions reflect the player's archetype and affect their core stats.
+
+#     Generate exactly 5 multiple-choice questions based on the topic: {topic}.
+
+#     Each question must include:
+#     - "question": a string describing the moral dilemma
+#     - "options": an array of exactly 4 answer choices. Each choice must be an object containing:
+#         - "label": a human-readable string (the answer text)
+#         - "name": a machine-friendly identifier (e.g., "help_villager")
+#         - "value": an object with 4 keys: "bravery", "curiosity", "empathy", and "logic". Each key must have an integer between -3 and 3 representing how the choice affects that stat. Do not omit any of the 4 keys.
+
+#     The full output must be a JSON array of exactly 5 such question objects. Do NOT include explanations, markdown formatting, or any text before or after the array. Only output raw JSON.
+
+#     Example output format:
+#     {example}
+#     """
+
+#     headers = {
+#         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+#         "HTTP-Referer": "http://localhost:5000",  # For local dev
+#         "X-Title": "MCQ Generator"
+#     }
+
+#     data = {
+#         "model": "mistralai/mistral-7b-instruct",  # or other OpenRouter-supported models
+#         "messages": [{"role": "user", "content": prompt}]
+#     }
+
+#     try:
+#         response = requests.post("https://openrouter.ai/api/v1/chat/completions",
+#                                  headers=headers, json=data)
+#         response.raise_for_status()
+
+#         content = response.json()["choices"][0]["message"]["content"]
+#         print("==== Raw LLM Output ====")
+#         print(content)
+
+#         # Remove markdown formatting if present
+#         content = content.strip().replace("```json", "").replace("```", "")
+
+#         # Attempt to parse as JSON
+#         questions = json.loads(content)
+
+#         # Validate structure
+#         assert isinstance(questions, list) and len(questions) == 5
+#         for q in questions:
+#             assert "question" in q and isinstance(q["question"], str)
+#             assert "options" in q and isinstance(q["options"], list) and len(q["options"]) == 4
+#             for opt in q["options"]:
+#                 assert "label" in opt and isinstance(opt["label"], str)
+#                 assert "name" in opt and isinstance(opt["name"], str)
+#                 assert "value" in opt and isinstance(opt["value"], dict)
+#                 for stat in ["bravery", "curiosity", "empathy", "logic"]:
+#                     assert stat in opt["value"]
+#                     assert isinstance(opt["value"][stat], int)
+#                     assert -3 <= opt["value"][stat] <= 3
+
+#         return jsonify({"questions": questions})
+
+#     except Exception as e:
+#         print("==== Error ====")
+#         print(str(e))
+#         if 'response' in locals():
+#             print("==== Response Text ====")
+#             print(response.text)
+#         return jsonify({"error": "Failed to generate or parse questions", "details": str(e)}), 500

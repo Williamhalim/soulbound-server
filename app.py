@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, request, jsonify
-from llm_client import generate_questions, get_personality_traits, generate_game_quiz, generate_plot_node, call_openrouter_for_plot_tree
+from llm_client import generate_questions, get_personality_traits, generate_plot_node, call_openrouter_for_plot_tree
 from alternate_start_generator import generate_alternate_start
 import json
 import re
