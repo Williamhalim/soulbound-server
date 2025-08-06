@@ -2,18 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Quest Tree Parser</title>
+  <title>Quest Tree Parser with Multiple Arcs</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    textarea { width: 100%; height: 200px; }
-    #story { margin-top: 20px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 900px; margin: auto; }
+    textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+    #story { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; }
     .choice-btn { display: block; margin-top: 10px; padding: 10px; font-size: 1em; }
   </style>
 </head>
 <body>
 
-  <h1>Quest Tree Tester</h1>
-  <textarea id="input" placeholder="Paste human-readable quest format here..."></textarea>
+  <h1>Quest Tree Tester (Multi-Arc)</h1>
+
+  <h3>Arc 1</h3>
+  <textarea id="input1" placeholder="Paste Arc 1 here..."></textarea>
+  
+  <h3>Arc 2</h3>
+  <textarea id="input2" placeholder="Paste Arc 2 here..."></textarea>
+  
+  <h3>Arc 3</h3>
+  <textarea id="input3" placeholder="Paste Arc 3 here..."></textarea>
+  
+  <h3>Arc 4</h3>
+  <textarea id="input4" placeholder="Paste Arc 4 here..."></textarea>
+  
   <button onclick="start()">Parse & Start</button>
 
   <div id="story"></div>
@@ -62,8 +74,17 @@
       return tree;
     }
 
+    function mergeTreesInOrder(treeList) {
+      const combined = {};
+      for (const tree of treeList) {
+        for (const [id, node] of Object.entries(tree)) {
+          combined[id] = node;  // Later arcs overwrite earlier ones for the same node ID
+        }
+      }
+      return combined;
+    }
+
     function updateStoryContext(quest, choice) {
-      // You can add logs or game state updates here
       console.log("Chose:", choice.text, "-> Next Node:", choice.next);
     }
 
@@ -99,9 +120,20 @@
     }
 
     function start() {
-      const input = document.getElementById("input").value;
-      questTree = parseHumanReadable(input);
-      currentQuestId = Object.keys(questTree)[0]; // Start from first node
+      const input1 = document.getElementById("input1").value;
+      const input2 = document.getElementById("input2").value;
+      const input3 = document.getElementById("input3").value;
+      const input4 = document.getElementById("input4").value;
+
+      const tree1 = parseHumanReadable(input1);
+      const tree2 = parseHumanReadable(input2);
+      const tree3 = parseHumanReadable(input3);
+      const tree4 = parseHumanReadable(input4);
+
+      questTree = mergeTreesInOrder([tree1, tree2, tree3, tree4]);
+
+      // Start from the first node of Arc 1
+      currentQuestId = Object.keys(tree1)[0];
       renderQuest();
     }
   </script>
